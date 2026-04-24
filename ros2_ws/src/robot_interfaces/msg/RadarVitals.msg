@@ -1,0 +1,8 @@
+std_msgs/Header header
+float32 heart_rate
+float32 breath_rate
+float32 target_distance
+float32 target_azimuth_deg
+float32 target_elevation_deg
+float32 snr_db
+bool target_detected
