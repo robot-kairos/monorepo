@@ -33,11 +33,20 @@ export function useRobotWS() {
       try {
         const msg = JSON.parse(ev.data as string) as Record<string, unknown>;
         if (msg.type === 'state') {
-          setState({
-            temperature: msg.temperature as RobotState['temperature'],
-            vitals: msg.vitals as RobotState['vitals'],
-            playing: msg.playing as string | null,
-          });
+          const t = (msg.temperature ?? {}) as Record<string, number | null>;
+          const v = (msg.vitals ?? {}) as Record<string, number | null>;
+          setState((prev) => ({
+            temperature: {
+              ambient: t.ambient ?? prev.temperature.ambient,
+              object:  t.object  ?? prev.temperature.object,
+            },
+            vitals: {
+              hr:       v.hr       ?? prev.vitals.hr,
+              br:       v.br       ?? prev.vitals.br,
+              distance: v.distance ?? prev.vitals.distance,
+            },
+            playing: (msg.playing as string | null) ?? null,
+          }));
         } else if (msg.type === 'log') {
           setLog((prev) => [msg.entry as LogEntry, ...prev].slice(0, 50));
         }

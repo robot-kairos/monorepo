@@ -1,3 +1,5 @@
+.playwright-mcp/
+
 # ---- VirtualEnv ----
 # Virtualenv
 # https://realpython.com/python-virtual-environments-a-primer/#the-virtualenv-project

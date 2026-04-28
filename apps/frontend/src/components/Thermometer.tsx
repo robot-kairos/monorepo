@@ -23,7 +23,7 @@ interface ThermometerProps {
 }
 
 export function Thermometer({ temperature, unitTemp }: ThermometerProps) {
-  const { tempC } = temperature;
+  const tempC = temperature.ambient;
   const tempF = tempC * 9 / 5 + 32;
   const show = unitTemp === 'F' ? tempF : tempC;
   const pct = clamp(((tempC - 10) / 40) * 100, 0, 100);

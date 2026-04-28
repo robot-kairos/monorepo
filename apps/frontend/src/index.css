@@ -17,6 +17,14 @@
   --violet: oklch(0.72 0.12 290);
   --mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   --sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* MedKit light theme */
+  --mk-bg: #f1efe3;
+  --mk-card: #f0eee1;
+  --mk-orange: #ef7519;
+  --mk-text: #322116;
+  --mk-text-dim: rgba(0,0,0,0.6);
+  --mk-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Helvetica Neue', sans-serif;
 }
 
 *,
@@ -29,20 +37,12 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg-0);
+  background: var(--mk-bg);
   color: var(--fg);
   font-family: var(--sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
-}
-
-body {
-  background:
-    radial-gradient(1200px 600px at 20% -10%, oklch(0.25 0.04 260 / 0.35), transparent 60%),
-    radial-gradient(900px 500px at 110% 110%, oklch(0.25 0.05 75 / 0.12), transparent 60%),
-    var(--bg-0);
-  background-attachment: fixed;
 }
 
 #root {

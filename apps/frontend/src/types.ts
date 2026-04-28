@@ -2,7 +2,8 @@ export type Accent = 'amber' | 'green' | 'cyan' | 'violet';
 export type TempUnit = 'C' | 'F';
 
 export interface Temperature {
-  tempC: number;
+  ambient: number;
+  object: number;
 }
 
 export interface Vitals {
@@ -26,7 +27,7 @@ export interface LogEntry {
 }
 
 export const DEFAULT_STATE: RobotState = {
-  temperature: { tempC: 23.6 },
+  temperature: { ambient: 23.6, object: 36.0 },
   vitals: { hr: 78, br: 16, distance: 3.42 },
   playing: null,
 };
@@ -69,3 +70,11 @@ export const DEFAULT_TWEAKS: Tweaks = {
   unitTemp: 'C',
   gridLines: true,
 };
+
+export interface SurvivorProfile {
+  id: string;
+  trappedSince: 'earthquake' | 'later' | 'unknown';
+  gender: 'male' | 'female' | 'unknown';
+  ageGroup: 'child' | 'adult' | 'elderly' | 'unknown';
+  earthquakeTime: Date;
+}
