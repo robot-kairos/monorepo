@@ -1,0 +1,41 @@
+services:
+  # The camera and dev board serial port need to be mounted
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile.dev
+    network_mode: host
+    # ports:
+    #   - "8000:8000"
+    environment:
+      - ROS_DOMAIN_ID=42
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/backend
+          target: /app
+
+  publisher:
+    build:
+      context: ./ros2_publisher_node
+    network_mode: host
+    environment:
+      - ROS_DOMAIN_ID=42
+    # Uncomment to pass through the Arduino serial port:
+    # devices:
+    #   - /dev/ttyACM1:/dev/ttyACM1
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile.dev
+    # network_mode: host
+    ports:
+      - "8080:8080"
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/frontend/src
+          target: /app/src
+    depends_on:
+      - backend

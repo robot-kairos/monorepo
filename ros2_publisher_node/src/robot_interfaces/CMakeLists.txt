@@ -6,7 +6,7 @@ find_package(std_msgs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Telemetry.msg"
+  "msg/Temperature.msg"
   "msg/RadarVitals.msg"
   "msg/AudioCommand.msg"
   DEPENDENCIES std_msgs

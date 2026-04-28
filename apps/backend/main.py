@@ -18,43 +18,47 @@ from video import CameraCapture, video_feed_response
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSPresetProfiles
-from sensor_msgs.msg import Temperature
+
 from std_msgs.msg import Bool
-from robot_interfaces.msg import RadarVitals, AudioCommand
+from robot_interfaces.msg import RadarVitals, AudioCommand, Temperature
 
 # Set to True only after ROS2 node successfully initializes and subscribes
 ROS2_AVAILABLE = False
 
-
-# ---------------------------------------------------------------------------
-# Sensor state  ← SPOSTATO QUI, prima di RobotBridge
-# ---------------------------------------------------------------------------
-
 class SensorState:
     def __init__(self) -> None:
-        self.temp_c: Optional[float] = None
+        self._lock = threading.Lock()
+
+        # radar
         self.hr: Optional[float] = None
         self.br: Optional[float] = None
         self.distance: Optional[float] = None
+
+        # thermometer
+        self.temp_ambient: Optional[float] = None
+        self.temp_object: Optional[float] = None
+
+        # df mini
         self.playing: Optional[str] = None
-        self._lock = threading.Lock()
 
     def as_state_msg(self) -> str:
+        # Round data or return None
         def r(v: Optional[float], n: int) -> Optional[float]:
             return round(v, n) if v is not None else None
+
         with self._lock:
             return json.dumps({
                 "type": "state",
                 "online": ROS2_AVAILABLE,
                 "temperature": {
-                    "tempC": r(self.temp_c, 1),
+                    "ambient": r(self.temp_ambient, 1),
+                    "object": r(self.temp_object, 1),
                 },
                 "vitals": {
                     "hr":       r(self.hr,       1),
                     "br":       r(self.br,       1),
                     "distance": r(self.distance, 2),
                 },
-                "playing": self.playing,
             })
 
 
@@ -79,7 +83,8 @@ class RobotBridge(Node):
 
     def _on_temp(self, msg: Temperature):
         with self._s._lock:
-            self._s.temp_c = msg.temperature
+            self._s.temp_ambient = msg.temp_ambient
+            self._s.temp_object = msg.temp_object
 
     def _on_vitals(self, msg: RadarVitals):
         with self._s._lock:
@@ -227,7 +232,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                 if _bridge:
                     _bridge.publish_audio_command("play", sid)
                 await websocket.send_text(
-                    _log_msg("INFO", f"Audio payload {sid} dispatched to robot speaker")
+                    _log_msg("INFO", f"Audio payload {sid} dispatched to DF player")
                 )
                 await manager.broadcast(sensor.as_state_msg())
             elif mtype == "stop_sound":
@@ -235,7 +240,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
                     sensor.playing = None
                 if _bridge:
                     _bridge.publish_audio_command("stop")
-                await websocket.send_text(_log_msg("INFO", "Audio playback stopped"))
+                await websocket.send_text(_log_msg("INFO", "DF player Audio playback stopped"))
                 await manager.broadcast(sensor.as_state_msg())
     except WebSocketDisconnect:
         pass

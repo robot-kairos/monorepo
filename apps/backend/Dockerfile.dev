@@ -1,0 +1,28 @@
+# Python FASTAPI backend
+# Run with: docker compose -f docker-compose.dev.yml up
+FROM ros:jazzy
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3-colcon-common-extensions \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ENV UV_LINK_MODE=copy
+
+# Build only the interfaces package (messages/services) from the publisher repo
+COPY ros2_publisher_node/src/robot_interfaces /ws/src/robot_interfaces
+WORKDIR /ws
+RUN . /opt/ros/jazzy/setup.sh && colcon build --packages-select robot_interfaces
+
+# Source our workspace overlay on every ros_entrypoint.sh launch
+RUN sed -i '/exec "\$@"/i source /ws/install/setup.bash' /ros_entrypoint.sh
+
+# Python dependencies — headless OpenCV avoids pulling in Qt/display libs
+WORKDIR /app
+COPY apps/backend/pyproject.toml .
+RUN uv sync --no-dev
+COPY apps/backend/ .
+
+EXPOSE 8000
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["uv", "run", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
