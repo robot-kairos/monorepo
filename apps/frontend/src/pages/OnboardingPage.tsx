@@ -65,8 +65,8 @@ export function OnboardingPage({ onStart }: Props) {
       {/* Title */}
       <h1
         style={{
-          fontFamily: 'Georgia, "Times New Roman", serif',
-          fontStyle: 'italic',
+          fontFamily: '"Raleway", sans-serif',
+          fontWeight: 200,
           fontSize: 72,
           color: '#ef7519',
           textAlign: 'center',
