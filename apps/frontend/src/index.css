@@ -31,22 +31,27 @@
 *::before,
 *::after {
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 html,
 body {
   margin: 0;
-  padding: 0;
+  padding-top: env(safe-area-inset-top);
+  padding-left: 0;
+  padding-right: 0
+  padding-bottom: env(safe-area-inset-bottom);
   background: var(--mk-bg);
   color: var(--fg);
   font-family: var(--sans);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 #root {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 button {
@@ -81,4 +86,4 @@ button {
 @keyframes radar-sweep {
   from { transform: rotate(-90deg); }
   to   { transform: rotate(90deg); }
-}
+}k-sans);

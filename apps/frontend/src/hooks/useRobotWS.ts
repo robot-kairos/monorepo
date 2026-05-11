@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_STATE, LogEntry, RobotState, WsOutMessage } from '../types';
 
-const WS_URL = `ws://${window.location.hostname}:8000/ws`;
+const WS_URL = `ws://${window.location.host}/ws`;
 
 export function useRobotWS() {
   const [state, setState] = useState<RobotState>(DEFAULT_STATE);

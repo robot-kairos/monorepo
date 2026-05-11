@@ -15,12 +15,15 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from video import CameraCapture, video_feed_response
 
-import rclpy
-from rclpy.node import Node
-from rclpy.qos import QoSPresetProfiles
-
-from std_msgs.msg import Bool
-from robot_interfaces.msg import RadarVitals, AudioCommand, Temperature
+try:
+    import rclpy
+    from rclpy.node import Node
+    from rclpy.qos import QoSPresetProfiles
+    from std_msgs.msg import Bool
+    from robot_interfaces.msg import RadarVitals, AudioCommand, Temperature
+    _ROS2_IMPORTS_OK = True
+except ImportError:
+    _ROS2_IMPORTS_OK = False
 
 # Set to True only after ROS2 node successfully initializes and subscribes
 ROS2_AVAILABLE = False
@@ -66,46 +69,50 @@ class SensorState:
 # ROS 2 Bridge (background thread)
 # ---------------------------------------------------------------------------
 
-_bridge: Optional["RobotBridge"] = None
+_bridge = None
 
 
-class RobotBridge(Node):
-    def __init__(self, sensor: SensorState) -> None:
-        super().__init__('console_bridge')
-        self._s = sensor
-        QOS = QoSPresetProfiles.SENSOR_DATA.value
+if _ROS2_IMPORTS_OK:
+    class RobotBridge(Node):
+        def __init__(self, sensor: SensorState) -> None:
+            super().__init__('console_bridge')
+            self._s = sensor
+            QOS = QoSPresetProfiles.SENSOR_DATA.value
 
-        self.create_subscription(Temperature, '/robot/sensors/temperature', self._on_temp,   QOS)
-        self.create_subscription(RadarVitals, '/robot/radar/vitals',        self._on_vitals, QOS)
+            self.create_subscription(Temperature, '/robot/sensors/temperature', self._on_temp,   QOS)
+            self.create_subscription(RadarVitals, '/robot/radar/vitals',        self._on_vitals, QOS)
 
-        self._audio_pub = self.create_publisher(AudioCommand, '/robot/audio/command', 10)
-        self._ptt_pub   = self.create_publisher(Bool,         '/robot/ptt/state',     10)
+            self._audio_pub = self.create_publisher(AudioCommand, '/robot/audio/command', 10)
+            self._ptt_pub   = self.create_publisher(Bool,         '/robot/ptt/state',     10)
 
-    def _on_temp(self, msg: Temperature):
-        with self._s._lock:
-            self._s.temp_ambient = msg.temp_ambient
-            self._s.temp_object = msg.temp_object
+        def _on_temp(self, msg: Temperature):
+            with self._s._lock:
+                self._s.temp_ambient = msg.temp_ambient
+                self._s.temp_object = msg.temp_object
 
-    def _on_vitals(self, msg: RadarVitals):
-        with self._s._lock:
-            self._s.hr       = msg.heart_rate
-            self._s.br       = msg.breath_rate
-            self._s.distance = msg.target_distance
+        def _on_vitals(self, msg: RadarVitals):
+            with self._s._lock:
+                self._s.hr       = msg.heart_rate
+                self._s.br       = msg.breath_rate
+                self._s.distance = msg.target_distance
 
-    def publish_audio_command(self, action: str, track_id: str = '') -> None:
-        msg = AudioCommand()
-        msg.action   = action
-        msg.track_id = track_id
-        self._audio_pub.publish(msg)
+        def publish_audio_command(self, action: str, track_id: str = '') -> None:
+            msg = AudioCommand()
+            msg.action   = action
+            msg.track_id = track_id
+            self._audio_pub.publish(msg)
 
-    def publish_ptt(self, active: bool) -> None:
-        msg = Bool()
-        msg.data = active
-        self._ptt_pub.publish(msg)
+        def publish_ptt(self, active: bool) -> None:
+            msg = Bool()
+            msg.data = active
+            self._ptt_pub.publish(msg)
 
 
 def _ros_spin_thread(sensor_state: SensorState) -> None:
     global _bridge, ROS2_AVAILABLE
+    if not _ROS2_IMPORTS_OK:
+        print("[WARN] ROS2 not available — running without robot bridge")
+        return
     try:
         rclpy.init()
         _bridge = RobotBridge(sensor_state)

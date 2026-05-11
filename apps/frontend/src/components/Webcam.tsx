@@ -107,6 +107,7 @@ export function Webcam({ accent, gridLines }: WebcamProps) {
   }, []);
 
   const imgRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleSnapshot = () => {
     const img = imgRef.current;
@@ -134,14 +135,15 @@ export function Webcam({ accent, gridLines }: WebcamProps) {
       style={{ gridColumn: 'span 8', gridRow: 'span 2' }}
     >
       <div
+        ref={containerRef}
         style={{ position: 'relative', flex: 1, minHeight: 480, overflow: 'hidden', background: '#05060a' }}
       >
-        {/* MJPEG stream */}
+        {/* MJPEG stream from backend */}
         {!streamError && (
           <img
             ref={imgRef}
             src="/video"
-            alt="Live webcam"
+            alt="Live feed"
             onError={() => setStreamError(true)}
             onLoad={() => setStreamError(false)}
             style={{
@@ -248,6 +250,10 @@ export function Webcam({ accent, gridLines }: WebcamProps) {
             </button>
             <button onClick={handleSnapshot} style={pillBtn(false, accent)}>SNAPSHOT</button>
             <button style={pillBtn(false, accent)}>FLASHLIGHT</button>
+            <button onClick={() => {
+              if (!document.fullscreenElement) containerRef.current?.requestFullscreen();
+              else document.exitFullscreen();
+            }} style={pillBtn(false, accent)}>FULLSCREEN</button>
           </div>
         </div>
       </div>

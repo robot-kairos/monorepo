@@ -103,8 +103,6 @@ export function OnboardingPage({ onStart }: Props) {
           const isBottom = step.number === 0;
           const isFirst = idx === 0;
           const marginTop = isFirst ? 0 : -52;
-          // visible peek height per card = minHeight - |marginTop| = 110 - 52 = 58px
-          // Push content to bottom so it sits inside the peek band
           return (
             <div
               key={step.number}
@@ -126,81 +124,34 @@ export function OnboardingPage({ onStart }: Props) {
                   : '18px 20px 0',
               }}
             >
-              {/* Card row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-              >
-                {/* Step number circle */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                 <div
                   style={{
-                    width: 26,
-                    height: 26,
-                    borderRadius: '50%',
-                    background: 'rgba(20,20,20,0.75)',
-                    color: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    flexShrink: 0,
+                    width: 26, height: 26, borderRadius: '50%',
+                    background: 'rgba(20,20,20,0.75)', color: '#fff',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700, flexShrink: 0,
                   }}
                 >
                   {step.number}
                 </div>
-
-                {/* Step name */}
-                <span
-                  style={{
-                    flex: 1,
-                    fontSize: 20,
-                    fontFamily: 'var(--mk-sans)',
-                    fontWeight: 600,
-                    color: '#1a1008',
-                  }}
-                >
+                <span style={{ flex: 1, fontSize: 20, fontFamily: 'var(--mk-sans)', fontWeight: 600, color: '#1a1008' }}>
                   {step.label}
                 </span>
-
-                {/* Timer badge */}
-                <div
-                  style={{
-                    background: 'rgba(20,20,20,0.75)',
-                    color: '#fff',
-                    borderRadius: 20,
-                    padding: '3px 10px',
-                    fontSize: 12,
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                  }}
-                >
+                <div style={{
+                  background: 'rgba(20,20,20,0.75)', color: '#fff',
+                  borderRadius: 20, padding: '3px 10px',
+                  fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
                   🕐 20s
                 </div>
               </div>
 
-              {/* Bottom card description bullets */}
               {isBottom && step.description && (
-                <ul
-                  style={{
-                    margin: '12px 0 0 38px',
-                    padding: 0,
-                    listStyle: 'disc',
-                    color: '#1a1008',
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                  }}
-                >
+                <ul style={{ margin: '12px 0 0 38px', padding: 0, listStyle: 'disc', color: '#1a1008', fontSize: 14, lineHeight: 1.6 }}>
                   {step.description.map((line) => (
-                    <li key={line} style={{ marginBottom: 2 }}>
-                      {line}
-                    </li>
+                    <li key={line} style={{ marginBottom: 2 }}>{line}</li>
                   ))}
                 </ul>
               )}
@@ -209,35 +160,19 @@ export function OnboardingPage({ onStart }: Props) {
         })}
       </div>
 
-      {/* Get Started button — fixed to bottom of page container */}
-      <div
-        style={{
-          position: 'fixed',
-          bottom: 30,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '100%',
-          maxWidth: 430,
-          display: 'flex',
-          justifyContent: 'center',
-          zIndex: 100,
-          pointerEvents: 'none',
-        }}
-      >
+      <div style={{
+        position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)',
+        width: '100%', maxWidth: 430,
+        display: 'flex', justifyContent: 'center',
+        zIndex: 100, pointerEvents: 'none',
+      }}>
         <button
           onClick={onStart}
           style={{
-            pointerEvents: 'all',
-            width: '80%',
-            height: 48,
-            background: 'rgba(9,9,9,0.85)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 24,
-            fontSize: 18,
-            fontFamily: 'var(--mk-sans)',
-            fontWeight: 600,
-            cursor: 'pointer',
+            pointerEvents: 'all', width: '80%', height: 48,
+            background: 'rgba(9,9,9,0.85)', color: '#fff',
+            border: 'none', borderRadius: 24,
+            fontSize: 18, fontFamily: 'var(--mk-sans)', fontWeight: 600, cursor: 'pointer',
             letterSpacing: '0.01em',
           }}
         >
