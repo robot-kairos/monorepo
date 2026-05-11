@@ -67,7 +67,7 @@ function FallbackCanvas() {
       const d = imgd.data;
       for (let i = 0; i < d.length; i += 4) {
         const n = (Math.random() - 0.5) * 18;
-        d[i]     = clamp((d[i]     ?? 0) + n, 0, 255);
+        d[i] = clamp((d[i] ?? 0) + n, 0, 255);
         d[i + 1] = clamp((d[i + 1] ?? 0) + n, 0, 255);
         d[i + 2] = clamp((d[i + 2] ?? 0) + n, 0, 255);
       }
@@ -142,7 +142,7 @@ export function Webcam({ accent, gridLines }: WebcamProps) {
         {!streamError && (
           <img
             ref={imgRef}
-            src="/video"
+            src="http://localhost:8000/video"
             alt="Live feed"
             onError={() => setStreamError(true)}
             onLoad={() => setStreamError(false)}
@@ -187,14 +187,14 @@ export function Webcam({ accent, gridLines }: WebcamProps) {
             <circle r="44" fill="none" stroke={accentColor} strokeWidth="1.2" opacity="0.9" />
             <circle r="3" fill={accentColor} />
             <line x1="-60" y1="0" x2="-46" y2="0" stroke={accentColor} strokeWidth="1.2" />
-            <line x1="46"  y1="0" x2="60"  y2="0" stroke={accentColor} strokeWidth="1.2" />
+            <line x1="46" y1="0" x2="60" y2="0" stroke={accentColor} strokeWidth="1.2" />
             <line x1="0" y1="-60" x2="0" y2="-46" stroke={accentColor} strokeWidth="1.2" />
-            <line x1="0" y1="46"  x2="0" y2="60"  stroke={accentColor} strokeWidth="1.2" />
+            <line x1="0" y1="46" x2="0" y2="60" stroke={accentColor} strokeWidth="1.2" />
             <text x="52" y="-38" fill={accentColor} fontFamily="var(--mono)" fontSize="11">TGT-01 · 3.4 m</text>
             <text x="52" y="-24" fill="rgba(255,255,255,0.7)" fontFamily="var(--mono)" fontSize="10">HUMAN · p=0.94</text>
           </g>
           {/* corner markers */}
-          {([[10,10],[890,10],[10,510],[890,510]] as const).map(([x, y], i) => {
+          {([[10, 10], [890, 10], [10, 510], [890, 510]] as const).map(([x, y], i) => {
             const dx = x < 450 ? 1 : -1, dy = y < 260 ? 1 : -1;
             return (
               <g key={i} stroke="rgba(255,255,255,0.5)" strokeWidth="1">
