@@ -130,7 +130,7 @@ function CameraFeed() {
     }}>
       {!err && (
         <img
-          src="http://localhost:8000/video"
+          src={`http://${window.location.hostname}:8000/video`}
           alt="camera feed"
           onError={() => setErr(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'contrast(1.03) saturate(0.92)' }}
