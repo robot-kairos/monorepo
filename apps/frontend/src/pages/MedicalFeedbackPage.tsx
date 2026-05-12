@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const FONT     = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const FONT     = 'var(--sans)';
 const GRADIENT = 'linear-gradient(180deg, #ff8b3a 0%, #f7c37f 40%, #edebde 100%)';
 
 // rotate(+90deg) axis mapping: CSS top→visual right, bottom→visual left, right→visual bottom/home, left→visual top/notch
@@ -22,7 +22,7 @@ function Watermark() {
       {WATERMARK_POSITIONS.map((pos, i) => (
         <span key={i} style={{
           position: 'absolute', top: pos.top, left: pos.left,
-          fontSize: 80, fontFamily: 'Georgia, serif', fontStyle: 'italic', fontWeight: 700,
+          fontSize: 80, fontFamily: 'var(--display)', fontStyle: 'italic', fontWeight: 700,
           color: '#fff', opacity: 0.12, transform: 'rotate(-17deg)',
           whiteSpace: 'nowrap', userSelect: 'none',
         }}>MedKit</span>

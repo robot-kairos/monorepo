@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { SurvivorProfile } from '../types';
 
-const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif';
+const FONT = 'var(--sans)';
 
 type TrappedSince = 'earthquake' | 'later' | 'unknown';
 type Gender       = 'male' | 'female' | 'unknown';

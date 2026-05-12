@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif';
+const FONT = 'var(--sans)';
 const WATERMARK_POSITIONS = [
   { top: -10, left: -40 },
   { top: 80,  left: 100 },
@@ -45,7 +45,7 @@ export function TutorialPage({ onNext }: { onNext: () => void }) {
         {WATERMARK_POSITIONS.map((pos, i) => (
           <span key={i} style={{
             position: 'absolute', top: pos.top, left: pos.left,
-            fontSize: 80, fontFamily: '"Raleway", sans-serif', fontWeight: 200,
+            fontSize: 80, fontFamily: 'var(--display)', fontWeight: 200,
             color: '#fff', opacity: 0.15, transform: 'rotate(-17deg)',
             whiteSpace: 'nowrap', userSelect: 'none',
           }}>MedKit</span>

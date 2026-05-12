@@ -73,7 +73,7 @@ export function OnboardingPage({ onStart }: Props) {
       <div style={{ paddingTop: 20, paddingBottom: 26}}>
         <h1
           style={{
-            fontFamily: '"Raleway", sans-serif',
+            fontFamily: 'var(--display)',
             fontWeight: 200,
             fontSize: 72,
             color: '#ef7519',
@@ -150,7 +150,7 @@ export function OnboardingPage({ onStart }: Props) {
                 >
                   {step.number}
                 </div>
-                <span style={{ flex: 1, fontSize:  isBottom ? 28 : 23, fontFamily: 'var(--mk-sans)', fontWeight: isBottom ? 650 : 400, color: '#1a1008' }}>
+                <span style={{ flex: 1, fontSize:  isBottom ? 28 : 23, fontFamily: 'var(--display)', fontWeight: isBottom ? 650 : 400, color: '#1a1008' }}>
                   {step.label}
                 </span>
                 <div style={{

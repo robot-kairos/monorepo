@@ -179,7 +179,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
         flexShrink: 0,
         transform: 'rotate(90deg)',
         background: '#000',
-        fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+        fontFamily: 'var(--sans)',
         userSelect: 'none',
       }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 const BG   = '#f0ede0';
-const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+const FONT = 'var(--sans)';
 
 // rotate(+90deg) axis mapping: CSS top→visual right, bottom→visual left, right→visual bottom/home, left→visual top/notch
 const SA_TOP    = 'max(20px, env(safe-area-inset-right))';
