@@ -16,6 +16,7 @@ const STEPS = [
 
 const FUTURE_TAB_BG   = '#e9e4cf';
 const FUTURE_TAB_TEXT = 'rgba(45, 40, 30, 0.38)';
+const OVERLAY_OPACITY = 0.6;
 
 function ProgressTabs({ stepIdx }: { stepIdx: number }) {
   const visible = STEPS.slice(stepIdx);
@@ -57,7 +58,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
     <div style={{
       position: 'absolute', right: -15, bottom: 17, width: 60,
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-      opacity: 0.65, zIndex: 1,
+      opacity: OVERLAY_OPACITY, zIndex: 1,
     }}>
       <button
         onMouseDown={() => setPtt(true)}
@@ -101,7 +102,7 @@ function RightRail({ color, onBack, onForward }: {
         color: '#2c220d',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 30, lineHeight: 1, fontWeight: 'bold',
-        opacity: 0.65, cursor: 'pointer', zIndex: 1,
+        opacity: OVERLAY_OPACITY, cursor: 'pointer', zIndex: 1,
       }}>‹</button>
 
       <button onClick={onForward} style={{
@@ -112,7 +113,7 @@ function RightRail({ color, onBack, onForward }: {
         color: '#2c220d',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         fontSize: 34, lineHeight: 1, fontWeight: 'bold',
-        opacity: 0.65,
+        opacity: OVERLAY_OPACITY,
         boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
         cursor: 'pointer', zIndex: 1,
       }}>›</button>
@@ -198,7 +199,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
             <div style={{
               position: 'absolute', left: 12, top: 17, right: 68,
               display: 'flex', alignItems: 'center', gap: 12, minWidth: 0,
-              opacity: 0.65,
+              opacity: OVERLAY_OPACITY,
             }}>
               <ProgressTabs stepIdx={stepIdx} />
             </div>
@@ -213,7 +214,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
               cursor: 'pointer', zIndex: 1,
-              opacity: 0.65,
+              opacity: OVERLAY_OPACITY,
             }}>
               <span style={{ fontSize: 26, fontWeight: 700, color: '#2b271f', lineHeight: 1 }}>?</span>
             </button>

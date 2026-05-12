@@ -35,7 +35,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
 
   function handleCreate() {
     onComplete({
-      id: `S-00${survivorCount}`,
+      id: `${survivorCount}`,
       trappedSince, gender, ageGroup,
       earthquakeTime: new Date(mountTimeRef.current),
     });
@@ -75,25 +75,26 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
           <span style={{ fontSize: 16, color: '#1a0d00', fontWeight: 500 }}>
-            Survivor #S-00{survivorCount}
+            Survivor #{survivorCount}
           </span>
         </div>
 
         {/* Elapsed time */}
         <div style={{
-          background: '#fff', borderRadius: 20, padding: '10px 16px', marginBottom: 14,
+          background: '#fff', borderRadius: '2.5rem', padding: '16px 16px', marginBottom: 22,
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
         }}>
-          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 4 }}>
+          <div style={{ fontSize: '1rem', color: '#000', marginBottom: 4 }}>
             Time since main earthquake
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 26, fontWeight: 700, color: '#322116' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontSize: 26, fontWeight: 700, color: '#322116' }}>
             <span style={{ fontSize: 18 }}>⏱</span>
             {formatElapsed(elapsed)}
           </div>
         </div>
 
         {/* Question */}
-        <h2 style={{ margin: '0 0 14px', fontSize: 22, fontWeight: 700, color: '#1a0d00', lineHeight: 1.25 }}>
+        <h2 style={{ margin: '0 0 14px', fontSize: '2rem', width: '70%', fontWeight: 400, color: '#1a0d00', lineHeight: 1.25 }}>
           Was this person trapped from the beginning?
         </h2>
 
