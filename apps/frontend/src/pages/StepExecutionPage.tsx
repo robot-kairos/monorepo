@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SurvivorProfile } from '../types';
 
 interface Props {
@@ -237,7 +237,7 @@ function CameraFeed() {
     }}>
       {!err && (
         <img
-          src="/camera.png"
+          src="http://localhost:8000/video"
           alt="camera feed"
           onError={() => setErr(true)}
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', filter: 'contrast(1.03) saturate(0.92)' }}
@@ -261,6 +261,12 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
   const [cam, setCam]         = useState(false);
   const [ptt, setPtt]         = useState(false);
+
+  useEffect(() => {
+    // document.body.style.backgroundColor = cam ? '#000' : SHELL_BG;
+    document.body.style.backgroundColor = '#000';
+    return () => { document.body.style.backgroundColor = ''; };
+  }, [cam]);
 
   const step      = STEPS[stepIdx]!;
   const canGoBack = true;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const BG   = '#f0ede0';
 const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
@@ -11,6 +11,11 @@ const SA_LEFT   = 'max(20px, env(safe-area-inset-top))';
 
 export function WaitingPage({ onNext }: { onNext: () => void }) {
   const [priorityCare, setPriorityCare] = useState(false);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = BG;
+    return () => { document.body.style.backgroundColor = ''; };
+  }, []);
 
   return (
     <div style={{

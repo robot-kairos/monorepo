@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 const FONT = 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif';
 const WATERMARK_POSITIONS = [
   { top: -10, left: -40 },
@@ -25,6 +27,11 @@ function StepCircle({ n }: { n: number }) {
 }
 
 export function TutorialPage({ onNext }: { onNext: () => void }) {
+  useEffect(() => {
+    document.body.style.backgroundColor = '#ff8b3a';
+    return () => { document.body.style.backgroundColor = ''; };
+  }, []);
+
   return (
     <div style={{
       minHeight: '95vh',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const FONT     = 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 const GRADIENT = 'linear-gradient(180deg, #ff8b3a 0%, #f7c37f 40%, #edebde 100%)';
@@ -39,6 +39,11 @@ const INSTRUCTION_BOXES: { status: 'reject' | 'accept' | 'active' }[] = [
 
 export function MedicalFeedbackPage({ onDone }: { onDone: () => void }) {
   const [notified, setNotified] = useState(false);
+
+  useEffect(() => {
+    document.body.style.backgroundColor = '#ff8b3a';
+    return () => { document.body.style.backgroundColor = ''; };
+  }, []);
 
   const outerStyle: React.CSSProperties = {
     position: 'fixed', inset: 0,

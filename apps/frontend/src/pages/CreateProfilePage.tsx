@@ -10,7 +10,7 @@ type AgeGroup     = 'child' | 'adult' | 'elderly' | 'unknown';
 function formatElapsed(ms: number): string {
   const h = Math.floor(ms / 3600000);
   const m = Math.floor((ms % 3600000) / 60000);
-  return `${String(h).padStart(2, '0')}h${String(m).padStart(2, '0')}min`;
+  return `${String(h)}h ${String(m).padStart(2, '0')}m`;
 }
 
 export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProfile) => void }) {
@@ -18,6 +18,11 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
   const [trappedSince, setTrappedSince] = useState<TrappedSince>('unknown');
   const [gender,       setGender]       = useState<Gender>('unknown');
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('unknown');
+
+  useEffect(() => {
+    document.body.style.backgroundColor = '#ff9240';
+    return () => { document.body.style.backgroundColor = ''; };
+  }, []);
 
   const baseOffsetMs  = (3 * 3600 + 42 * 60) * 1000;
   const mountTimeRef  = useRef<number>(Date.now() - baseOffsetMs);
@@ -27,15 +32,6 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
     const id = setInterval(() => setElapsed(Date.now() - mountTimeRef.current), 1000);
     return () => clearInterval(id);
   }, []);
-
-  function summaryText(): string {
-    const age = ageGroup === 'unknown' ? 'Unknown age' : ageGroup[0].toUpperCase() + ageGroup.slice(1);
-    const g   = gender === 'unknown' ? 'Gender unknown' : gender === 'male' ? 'Male' : 'Female';
-    const t   = trappedSince === 'earthquake' ? 'trapped since the earthquake'
-              : trappedSince === 'later'      ? 'trapped later'
-              :                                 'time trapped unknown';
-    return `${age} victim: ${g} and ${t}`;
-  }
 
   function handleCreate() {
     onComplete({
@@ -66,15 +62,17 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
   });
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', fontFamily: FONT }}>
+    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', fontFamily: FONT, overflow: 'hidden' }}>
 
       {/* ── Top orange section ── */}
       <div style={{
         background: 'linear-gradient(180deg, #ff9240 0%, #f9b466 100%)',
-        padding: '20px 20px 28px', flexShrink: 0,
+        padding: '16px 20px 20px', flexShrink: 0,
+        borderBottomLeftRadius: 24, borderBottomRightRadius: 24,
+        boxShadow: '0 6px 14px rgba(0,0,0,0.18)',
       }}>
         {/* Survivor ID */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
           <span style={{ fontSize: 16, color: '#1a0d00', fontWeight: 500 }}>
             Survivor #S-00{survivorCount}
@@ -83,52 +81,47 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
 
         {/* Elapsed time */}
         <div style={{
-          background: '#fff', borderRadius: 20, padding: '14px 18px', marginBottom: 20,
+          background: '#fff', borderRadius: 20, padding: '10px 16px', marginBottom: 14,
         }}>
-          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 6 }}>
+          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 4 }}>
             Time since main earthquake
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 28, fontWeight: 700, color: '#322116' }}>
-            <span style={{ fontSize: 20 }}>⏱</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 26, fontWeight: 700, color: '#322116' }}>
+            <span style={{ fontSize: 18 }}>⏱</span>
             {formatElapsed(elapsed)}
           </div>
         </div>
 
         {/* Question */}
-        <h2 style={{ margin: 0, fontSize: 26, fontWeight: 700, color: '#1a0d00', lineHeight: 1.25 }}>
+        <h2 style={{ margin: '0 0 14px', fontSize: 22, fontWeight: 700, color: '#1a0d00', lineHeight: 1.25 }}>
           Was this person trapped from the beginning?
         </h2>
+
+        {/* Trapped-since options */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => setTrappedSince('earthquake')} style={pillBase(trappedSince === 'earthquake')}>
+            ✓ Yes
+          </button>
+          <button onClick={() => setTrappedSince('later')} style={pillBase(trappedSince === 'later')}>
+            ✗ No
+          </button>
+          <button onClick={() => setTrappedSince('unknown')} style={pillBase(trappedSince === 'unknown')}>
+            ? Not sure
+          </button>
+        </div>
       </div>
 
       {/* ── Bottom beige section ── */}
       <div style={{
-        background: '#f0eee1', flex: 1, padding: '20px 20px 120px',
-        display: 'flex', flexDirection: 'column', gap: 0,
+        background: '#f0eee1', flex: 1, padding: '16px 20px 0',
+        display: 'flex', flexDirection: 'column', gap: 0, overflowY: 'auto',
       }}>
-        {/* Trapped-since options */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-          <button onClick={() => setTrappedSince('earthquake')} style={pillBase(trappedSince === 'earthquake')}>
-            ✓ Yes, since the earthquake
-          </button>
-          <button onClick={() => setTrappedSince('later')} style={pillBase(trappedSince === 'later')}>
-            ✗ No, trapped later
-          </button>
-          <button
-            onClick={() => setTrappedSince('unknown')}
-            style={{ ...pillBase(trappedSince === 'unknown'), flex: '0 0 auto', padding: '11px 14px', fontSize: 14 }}
-          >
-            ? Unknown
-          </button>
-        </div>
-
-        <div style={{ height: 1, background: 'rgba(0,0,0,0.1)', marginBottom: 20 }} />
-
         {/* Basic Info */}
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#322116', marginBottom: 16 }}>Basic Info</div>
+        <div style={{ fontSize: 20, fontWeight: 700, color: '#322116', marginBottom: 12 }}>Basic Info</div>
 
         {/* Gender */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 10 }}>Gender</div>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 8 }}>Gender</div>
           <div style={{ display: 'flex', gap: 8 }}>
             {(['female', 'male', 'unknown'] as Gender[]).map(val => (
               <button key={val} onClick={() => setGender(val)} style={pillBase(gender === val)}>
@@ -139,31 +132,21 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
         </div>
 
         {/* Age group */}
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 10 }}>Age Group</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 8 }}>Age Group</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
             <button onClick={() => setAgeGroup('child')}   style={ageBtn('child')}>😊 Child</button>
             <button onClick={() => setAgeGroup('adult')}   style={ageBtn('adult')}>😄 Adult</button>
             <button onClick={() => setAgeGroup('elderly')} style={ageBtn('elderly')}>🧓 Elderly</button>
             <button onClick={() => setAgeGroup('unknown')} style={ageBtn('unknown')}>? Unknown</button>
           </div>
         </div>
-
-        {/* Summary */}
-        <p style={{ fontSize: 14, color: 'rgba(50,33,22,0.6)', margin: '0 0 20px', fontStyle: 'italic' }}>
-          {summaryText()}
-        </p>
       </div>
 
       {/* Create Profile button */}
-      <div style={{
-        position: 'fixed', bottom: 40, left: '50%', transform: 'translateX(-50%)',
-        width: '100%', maxWidth: 430,
-        display: 'flex', justifyContent: 'center',
-        zIndex: 100, pointerEvents: 'none',
-      }}>
+      <div style={{ background: '#f0eee1', padding: '8px 20px 28px', display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
         <button onClick={handleCreate} style={{
-          pointerEvents: 'all', width: '80%', height: 48,
+          width: '80%', height: 48,
           background: 'rgba(9,9,9,0.85)', color: '#fff',
           border: 'none', borderRadius: 24,
           fontSize: 18, fontFamily: FONT, fontWeight: 600, cursor: 'pointer',
