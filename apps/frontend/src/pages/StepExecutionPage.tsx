@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { SurvivorProfile } from '../types';
 
 interface Props {
@@ -14,10 +14,8 @@ const STEPS = [
   { id: 4, label: 'SHOT',  color: '#8b6cff' },
 ];
 
-const SHELL_BG        = '#f5f1e3';
 const FUTURE_TAB_BG   = '#e9e4cf';
 const FUTURE_TAB_TEXT = 'rgba(45, 40, 30, 0.38)';
-const DARK_CTRL       = '#32312d';
 
 function ProgressTabs({ stepIdx }: { stepIdx: number }) {
   const visible = STEPS.slice(stepIdx);
@@ -29,7 +27,7 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
         return (
           <div key={step.id} style={{
             minWidth: 0,
-            flex: active ? '1.35 1 0' : '1 1 0',
+            flex: active ? '1 0 0' : '0 0 23%',
             height: 32,
             position: 'relative',
             zIndex: visible.length - i,
@@ -40,7 +38,7 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
             background: active ? step.color : FUTURE_TAB_BG,
             color: active ? '#1e170d' : FUTURE_TAB_TEXT,
             display: 'flex', alignItems: 'center', justifyContent: active && step.label !== 'REACH' ? 'flex-end' : 'center',
-            fontSize: 16, fontWeight: active ? 600 : 600,
+            fontSize: 16, fontWeight: 600,
             letterSpacing: '-0.01em',
             boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.18)' : undefined,
           }}>
@@ -54,14 +52,12 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
   );
 }
 
-// Push-to-talk microphone button, bottom-right corner (visual)
-function LeftSide({ ptt, setPtt, cam }: { ptt: boolean; setPtt: (v: boolean) => void; cam: boolean }) {
+function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void }) {
   return (
     <div style={{
       position: 'absolute', right: -15, bottom: 17, width: 60,
       display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-      opacity: cam ? 0.65 : 1,
-      zIndex: 1,
+      opacity: 0.65, zIndex: 1,
     }}>
       <button
         onMouseDown={() => setPtt(true)}
@@ -92,138 +88,35 @@ function LeftSide({ ptt, setPtt, cam }: { ptt: boolean; setPtt: (v: boolean) => 
   );
 }
 
-// Back (‹) and forward (›) navigation buttons, right side.
-// Forward button spans top:80 → bottom:14, same extents as the instruction area.
-function RightRail({ color, cam, canGoBack, onBack, onForward }: {
-  color: string; cam: boolean; canGoBack: boolean; onBack: () => void; onForward: () => void;
+function RightRail({ color, onBack, onForward }: {
+  color: string; onBack: () => void; onForward: () => void;
 }) {
   return (
     <>
-      <button onClick={onBack} disabled={!canGoBack} style={{
+      <button onClick={onBack} style={{
         position: 'absolute', right: -15, top: 17,
         width: 60, height: 48, borderRadius: 34,
         border: 'none',
-        background: canGoBack ? (cam ? color : DARK_CTRL) : 'rgba(50,49,45,0.25)',
-        color: canGoBack ? (cam ? '#2c220d' : '#fff') : 'rgba(255,255,255,0.45)',
+        background: color,
+        color: '#2c220d',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 30, lineHeight: 1,
-        fontWeight: 'bold',
-        opacity: cam ? 0.65 : 1,
-        cursor: canGoBack ? 'pointer' : 'default',
-        zIndex: 1,
+        fontSize: 30, lineHeight: 1, fontWeight: 'bold',
+        opacity: 0.65, cursor: 'pointer', zIndex: 1,
       }}>‹</button>
 
       <button onClick={onForward} style={{
         position: 'absolute', right: -15, top: 80, bottom: 92,
         width: 60, borderRadius: 34,
         border: 'none',
-        background: cam ? color : DARK_CTRL,
-        color: cam ? '#2c220d' : '#fff',
+        background: color,
+        color: '#2c220d',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 34, lineHeight: 1,
-        fontWeight: 'bold',
-        opacity: cam ? 0.65 : 1,
-        boxShadow: cam ? 'inset 0 0 0 1px rgba(0,0,0,0.08)' : undefined,
-        cursor: 'pointer',
-        zIndex: 1,
+        fontSize: 34, lineHeight: 1, fontWeight: 'bold',
+        opacity: 0.65,
+        boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.08)',
+        cursor: 'pointer', zIndex: 1,
       }}>›</button>
     </>
-  );
-}
-
-function FrameCard({ children }: { children?: React.ReactNode }) {
-  return (
-    <div style={{
-      background: '#fff',
-      borderRadius: 18,
-      border: '1px solid rgba(0,0,0,0.05)',
-      overflow: 'hidden',
-      height: '100%', minHeight: 0,
-    }}>
-      <div style={{
-        height: '100%',
-        display: 'grid', placeItems: 'center',
-        color: 'rgba(0,0,0,0.2)', fontSize: 15,
-      }}>
-        {children ?? 'Animation...'}
-      </div>
-    </div>
-  );
-}
-
-function UtilityStrip({ imgSrc, fit = 'fill' }: { imgSrc: string; fit?: 'fill' | 'contain' | 'cover' }) {
-  return (
-    <div style={{ width: '100%', height: '100%' }}>
-      <img src={imgSrc} alt="" style={{ width: '100%', height: '100%', objectFit: fit, display: 'block' }} />
-    </div>
-  );
-}
-
-function TitleText({ children, top = 0 }: { children: React.ReactNode; top?: number }) {
-  return (
-    <div style={{
-      paddingLeft: 4, paddingTop: top,
-      color: '#12100d', fontSize: 22, lineHeight: 1.15, fontWeight: 500,
-      whiteSpace: 'pre-line',
-    }}>
-      {children}
-    </div>
-  );
-}
-
-// Instruction content area. Each step: title + animation box on the left, image strip(s) on the right.
-// The right column spans full height (top:80 → bottom:14), same as the forward button.
-function InstructionStage({ stepIdx }: { stepIdx: number }) {
-  // Shared layout for steps 1–4: left col = title + animation, right col = controller strip image
-  const singleStripLayout = (title: React.ReactNode, strip: string, titleTop = 0) => (
-    <div style={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr 80px', gap: 10 }}>
-      <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', gap: 8, minHeight: 0 }}>
-        <TitleText top={titleTop}>{title}</TitleText>
-        <FrameCard />
-      </div>
-      <UtilityStrip imgSrc={strip} />
-    </div>
-  );
-
-  if (stepIdx === 0) {
-    return (
-      <div style={{ height: '100%', display: 'grid', gridTemplateColumns: '1fr 324px', gap: 10 }}>
-        <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr', gap: 8, minHeight: 0 }}>
-          <TitleText>Reach the{'\n'}survivor</TitleText>
-          <FrameCard />
-        </div>
-        <UtilityStrip imgSrc="/step1-main.png" fit="contain" />
-      </div>
-    );
-  }
-
-  if (stepIdx === 1) return singleStripLayout('Collect\ndata', '/step2-strip.png');
-  if (stepIdx === 2) return singleStripLayout(<>Voice awareness<br />check:&nbsp;&nbsp;Q&A</>, '/step3-strip.png');
-
-  // Step 4 (SHOT): two images on the right — drawings (left) + controller strip (right)
-  return (
-    <div style={{
-      height: '100%',
-      display: 'grid',
-      gridTemplateColumns: '1fr auto',
-      gridTemplateRows: 'auto 1fr',
-      rowGap: 8, columnGap: 10,
-    }}>
-      <div style={{ gridColumn: 1, gridRow: 1 }}>
-        <TitleText>Take A{'\n'}Photo</TitleText>
-      </div>
-      <div style={{ gridColumn: 1, gridRow: 2, minHeight: 0 }}>
-        <FrameCard />
-      </div>
-      <div style={{ gridColumn: 2, gridRow: '1 / -1', display: 'flex', gap: 10, minHeight: 0 }}>
-        <div style={{ width: 334, height: '100%', flexShrink: 0 }}>
-          <UtilityStrip imgSrc="/step5-drawings.png" fit="fill" />
-        </div>
-        <div style={{ width: 80, height: '100%', flexShrink: 0 }}>
-          <UtilityStrip imgSrc="/step5-strip.png" />
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -259,26 +152,16 @@ function CameraFeed() {
 
 export function StepExecutionPage({ onComplete, onBack }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
-  const [cam, setCam]         = useState(false);
   const [ptt, setPtt]         = useState(false);
 
-  useEffect(() => {
-    // document.body.style.backgroundColor = cam ? '#000' : SHELL_BG;
-    document.body.style.backgroundColor = '#000';
-    return () => { document.body.style.backgroundColor = ''; };
-  }, [cam]);
-
-  const step      = STEPS[stepIdx]!;
-  const canGoBack = true;
+  const step = STEPS[stepIdx]!;
 
   function goForward() {
-    if (!cam) { setCam(true); return; }
-    if (stepIdx < STEPS.length - 1) { setStepIdx(i => i + 1); setCam(false); return; }
+    if (stepIdx < STEPS.length - 1) { setStepIdx(i => i + 1); return; }
     onComplete();
   }
 
   function goBack() {
-    if (cam) { setCam(false); return; }
     if (stepIdx > 0) { setStepIdx(i => i - 1); return; }
     onBack();
   }
@@ -286,7 +169,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: cam ? '#000' : SHELL_BG,
+      background: '#000',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       overflow: 'hidden',
     }}>
@@ -294,21 +177,16 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
         width: '100dvh', height: '100dvw',
         flexShrink: 0,
         transform: 'rotate(90deg)',
-        background: cam ? '#000' : SHELL_BG,
+        background: '#000',
         fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
         userSelect: 'none',
       }}>
         <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
 
-          {/* Camera feed: full-bleed, ignores safe area */}
-          {cam && (
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
-              <CameraFeed />
-            </div>
-          )}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+            <CameraFeed />
+          </div>
 
-          {/* UI layer: respects safe area insets (axes rotated +90deg:
-              CSS top → physical right, right → bottom/home, bottom → physical left, left → top/notch) */}
           <div style={{
             position: 'absolute',
             top:    'env(safe-area-inset-right, 0px)',
@@ -317,44 +195,30 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
             left:   'env(safe-area-inset-top, 0px)',
             zIndex: 1,
           }}>
-            {/* Progress bar row: step badge + tabs */}
             <div style={{
               position: 'absolute', left: 12, top: 17, right: 68,
               display: 'flex', alignItems: 'center', gap: 12, minWidth: 0,
-              opacity: cam ? 0.65 : 1,
+              opacity: 0.65,
             }}>
               <ProgressTabs stepIdx={stepIdx} />
             </div>
 
-            <LeftSide ptt={ptt} setPtt={setPtt} cam={cam} />
+            <PttButton ptt={ptt} setPtt={setPtt} />
 
-            {/* Help button — visible only in camera view */}
-            {cam && (
-              <button style={{
-                position: 'absolute', left: 12, bottom: 17,
-                width: 60, height: 60, borderRadius: '50%',
-                border: '1px solid rgba(0,0,0,0.08)',
-                background: '#d9d4c1',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                cursor: 'pointer', zIndex: 1,
-                opacity: 0.65,
-              }}>
-                <span style={{ fontSize: 26, fontWeight: 700, color: '#2b271f', lineHeight: 1 }}>?</span>
-              </button>
-            )}
+            <button style={{
+              position: 'absolute', left: 12, bottom: 17,
+              width: 60, height: 60, borderRadius: '50%',
+              border: '1px solid rgba(0,0,0,0.08)',
+              background: '#d9d4c1',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
+              cursor: 'pointer', zIndex: 1,
+              opacity: 0.65,
+            }}>
+              <span style={{ fontSize: 26, fontWeight: 700, color: '#2b271f', lineHeight: 1 }}>?</span>
+            </button>
 
-            {/* Instruction area: same top/bottom extents as the forward button */}
-            {!cam && (
-              <div style={{
-                position: 'absolute', left: 78, right: 68, top: 80, bottom: 14,
-                minHeight: 0, minWidth: 0,
-              }}>
-                <InstructionStage stepIdx={stepIdx} />
-              </div>
-            )}
-
-            <RightRail color={step.color} cam={cam} canGoBack={canGoBack} onBack={goBack} onForward={goForward} />
+            <RightRail color={step.color} onBack={goBack} onForward={goForward} />
           </div>
 
         </div>
