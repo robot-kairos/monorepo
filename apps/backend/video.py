@@ -27,8 +27,8 @@ from PIL import Image
 # Configuration
 # =====================================================
 
-YOLO_MODEL_PATH = "../multi-label_classifier/yolov8n.pt"
-INJURY_MODEL_PATH = "../multi-label_classifier/best_injury_multilabel_resnet18.pth"
+YOLO_MODEL_PATH = "../../multi-label_classifier/yolov8n.pt"
+INJURY_MODEL_PATH = "../../multi-label_classifier/best_injury_multilabel_resnet18.pth"
 
 PERSON_CLASS_ID = 0
 PERSON_CONF_THRESHOLD = 0.5
