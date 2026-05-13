@@ -52,7 +52,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
   return (
     <div
       className="absolute flex flex-col items-center gap-[3px] z-[1]"
-      style={{ right: -15, bottom: 17, width: 60, opacity: OVERLAY_OPACITY }}
+      style={{ right: 0, bottom: 17, width: 60, opacity: OVERLAY_OPACITY }}
     >
       <button
         onMouseDown={() => setPtt(true)}
@@ -73,7 +73,6 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
           <line x1="12" y1="18" x2="12" y2="22" stroke="#111" strokeWidth="2" />
           <line x1="9" y1="22" x2="15" y2="22" stroke="#111" strokeWidth="2" />
         </svg>
-        <span className="text-[11px] font-bold text-[#2b271f] leading-none">Talk</span>
       </button>
     </div>
   );
@@ -87,7 +86,7 @@ function RightRail({ color, onBack, onForward }: {
       <button
         onClick={onBack}
         className="absolute flex items-center justify-center text-[30px] leading-none font-bold rounded-[34px] border-none cursor-pointer z-[1]"
-        style={{ right: -15, top: 17, width: 60, height: 48, background: color, color: '#2c220d', opacity: OVERLAY_OPACITY }}
+        style={{ right: 0, top: 17, width: 60, height: 48, background: color, color: '#2c220d', opacity: OVERLAY_OPACITY }}
       >
         ‹
       </button>
@@ -95,7 +94,7 @@ function RightRail({ color, onBack, onForward }: {
         onClick={onForward}
         className="absolute flex items-center justify-center text-[34px] leading-none font-bold rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
         style={{
-          right: -15, top: 80, bottom: 92, width: 60,
+          right: 0, top: 80, bottom: 92, width: 60,
           background: color, color: '#2c220d', opacity: OVERLAY_OPACITY,
         }}
       >
