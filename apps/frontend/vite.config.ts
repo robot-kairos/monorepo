@@ -9,6 +9,7 @@ export default defineConfig({
     port: 8080,
     strictPort: true,
     allowedHosts: true,
+    forwardConsole: true,
     proxy: {
       '/video': {
         target: 'http://localhost:8000',
