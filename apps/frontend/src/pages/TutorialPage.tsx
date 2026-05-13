@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { NextButton } from '../components/NextButton';
 
 const imgTexture     = "/tutorial-texture.png";
 const imgStep01Phone = "/tutorial-step01-phone.png";
@@ -8,13 +9,12 @@ const imgStep02Ctrl  = "/tutorial-step02-ctrl.png";
 const imgStep02Arrow = "/tutorial-step02-arrow.svg";
 const imgStep03Ready = "/tutorial-step03-ready.png";
 const imgStep03Scr   = "/tutorial-step03-scr.png";
-const imgArrowBtn    = "/tutorial-arrow-btn.svg";
 const imgGreenDot    = "/tutorial-green-dot.svg";
 
 export const TUTORIAL_IMAGE_URLS = [
   imgTexture, imgStep01Phone, imgStep01Scr, imgStep01Arrow,
   imgStep02Ctrl, imgStep02Arrow, imgStep03Ready, imgStep03Scr,
-  imgArrowBtn, imgGreenDot,
+  imgGreenDot,
 ];
 
 // Watermark positions (absolute px within the 402-wide frame)
@@ -31,7 +31,13 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
 
   useEffect(() => {
     document.body.style.backgroundColor = '#ff8b3a';
-    return () => { document.body.style.backgroundColor = ''; };
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.backgroundColor = '';
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, []);
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
 
   return (
     <div
-      className="h-dvh relative overflow-hidden flex justify-center font-sans"
+      className="fixed inset-0 overflow-hidden flex justify-center font-sans"
       style={{ background: 'linear-gradient(180deg, #ff8b3a 0%, #f7c37f 42.3%, #edebde 100%)' }}
     >
       {/* Texture */}
@@ -143,16 +149,9 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
           <img src={imgStep03Scr} alt="" className="w-full h-full object-cover" />
         </div>
 
-        {/* Start button */}
-        <div className="absolute" style={{ left: 37, top: 801, width: 330 }}>
-          <button
-            onClick={onNext}
-            className="w-full h-[44px] bg-[rgba(9,9,9,0.8)] text-white rounded-[20px] border-none cursor-pointer flex items-center justify-center gap-3"
-          >
-            <span className="text-[20px] font-sans font-normal leading-[30px]">Start</span>
-            <img src={imgArrowBtn} alt="→" className="w-[18px] h-[18px] block" />
-          </button>
-        </div>
+      </div>
+      <div className="fixed bottom-0 inset-x-0 flex justify-center px-5 pb-7 z-10">
+        <NextButton onClick={onNext} label="Start" className="w-[82%]" />
       </div>
     </div>
   );

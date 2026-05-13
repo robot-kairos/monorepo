@@ -7,7 +7,7 @@ import {
   HeartIcon,
   UserIcon,
 } from '@heroicons/react/24/solid';
-import { ArrowRightCircleIcon } from '@heroicons/react/24/outline';
+import { NextButton } from '../components/NextButton';
 
 interface Props {
   onStart: () => void;
@@ -55,7 +55,7 @@ export function OnboardingPage({ onStart }: Props) {
   }, []);
 
   return (
-    <div className="h-svh overflow-hidden bg-[#f1efe3] flex flex-col">
+    <div className="fixed inset-0 overflow-hidden bg-[#f1efe3] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Logo */}
       <div className="pt-10 pb-10 text-center shrink-0">
         <h1 className="font-display font-semibold text-[76px] text-[#ef7519] m-0 leading-none">
@@ -139,19 +139,11 @@ export function OnboardingPage({ onStart }: Props) {
               data will be collected automatically.
             </p>
 
-            {/* Next button */}
-            <div className="relative mt-auto px-5 pt-5 pb-7 flex justify-center">
-              <button
-                onClick={onStart}
-                className="flex items-center justify-center gap-2 h-12 bg-[rgba(9,9,9,0.9)] text-white rounded-[20px] text-[20px] font-display border-none cursor-pointer"
-                style={{ width: '82%' }}
-              >
-                Next
-                <ArrowRightCircleIcon className="w-[18px] h-[18px]" />
-              </button>
-            </div>
           </div>
         </div>
+      </div>
+      <div className="fixed bottom-0 inset-x-0 flex justify-center px-5 pb-7 z-10">
+        <NextButton onClick={onStart} label="Next" className="w-[82%]" />
       </div>
     </div>
   );
