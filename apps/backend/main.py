@@ -16,7 +16,7 @@ logger = logging.getLogger("uvicorn.error")
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from video import CameraCapture, video_feed_response
+from video import CameraCapture, video_feed_response, stream_stats, start_inference_worker
 
 try:
     import rclpy
@@ -198,6 +198,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup() -> None:
     camera.start()
+    start_inference_worker(camera)
     t = threading.Thread(target=_ros_spin_thread, args=(sensor,), daemon=True)
     t.start()
     asyncio.create_task(broadcast_loop())
@@ -211,6 +212,11 @@ async def on_shutdown() -> None:
 @app.get("/video")
 def video_feed():
     return video_feed_response(camera)
+
+
+@app.get("/video/stats")
+def video_stats():
+    return stream_stats.snapshot()
 
 
 @app.websocket("/ws")
