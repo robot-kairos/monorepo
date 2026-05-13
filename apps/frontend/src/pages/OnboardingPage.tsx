@@ -1,50 +1,43 @@
-import { useEffect } from 'react';
+import { useEffect, type CSSProperties } from 'react';
+import {
+  CircleStackIcon,
+  CameraIcon,
+  SpeakerWaveIcon,
+  HeartIcon,
+  UserIcon,
+} from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon } from '@heroicons/react/24/outline';
 
 interface Props {
   onStart: () => void;
 }
 
-interface StepCard {
+type IconComponent = React.ComponentType<React.SVGProps<SVGSVGElement>>;
+
+interface FolderItem {
+  order: number;
+  number: number;
   label: string;
   bg: string;
-  zIndex: number;
-  number: number;
-  description?: string[];
+  Icon: IconComponent;
 }
 
-const STEPS: StepCard[] = [
-  {
-    number: 4,
-    label: 'Take A Photo',
-    bg: '#AF9BFF',
-    zIndex: 1,
-  },
-  {
-    number: 3,
-    label: 'Consciousness check',
-    bg: '#80DEDF',
-    zIndex: 2,
-  },
-  {
-    number: 2,
-    label: 'Data Collection',
-    bg: '#f9a06a',
-    zIndex: 3,
-  },
-  {
-    number: 1,
-    label: 'Reach the survivor',
-    bg: '#FFC541',
-    zIndex: 4,
-  },
-  {
-    number: 0,
-    label: 'Basic Data Entry',
-    bg: '#CDDE6B',
-    zIndex: 5,
-    description: ['Enter casualty details', 'rotate phone to landscape and clip it'],
-  },
+const FOLDERS: FolderItem[] = [
+  { order: 0, number: 5, label: 'Data Entry',         bg: '#CDDE6B', Icon: CircleStackIcon },
+  { order: 1, number: 4, label: 'Take Photos',         bg: '#AF9BFF', Icon: CameraIcon },
+  { order: 2, number: 3, label: 'Consciousness check', bg: '#80DEDF', Icon: SpeakerWaveIcon },
+  { order: 3, number: 2, label: 'Life vitals',         bg: '#FE8F40', Icon: HeartIcon },
 ];
+
+const CARD_H = 130;
+const OVERLAP = 58;
+
+const gradientTextStyle: CSSProperties = {
+  background: 'linear-gradient(180deg, #2c3300 9.615%, #8f8f8f 105.77%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+};
 
 export function OnboardingPage({ onStart }: Props) {
   useEffect(() => {
@@ -57,141 +50,104 @@ export function OnboardingPage({ onStart }: Props) {
   }, []);
 
   return (
-    <div
-      style={{
-        height: '100svh',
-        overflow: 'hidden',
-        background: '#f1efe3',
-        paddingTop: 40,
-        position: 'relative',
-        fontFamily: 'var(--mk-sans)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
-      {/* Title + Subtitle */}
-      <div style={{ paddingTop: 20, paddingBottom: 26}}>
-        <h1
-          style={{
-            fontFamily: 'var(--display)',
-            fontWeight: 200,
-            fontSize: 72,
-            color: '#ef7519',
-            textAlign: 'center',
-            margin: 0,
-            lineHeight: 1,
-          }}
-        >
+    <div className="h-svh overflow-hidden bg-[#f1efe3] flex flex-col">
+      {/* Logo */}
+      <div className="pt-10 pb-10 text-center shrink-0">
+        <h1 className="font-display font-semibold text-[76px] text-[#ef7519] m-0 leading-none">
           MedKit
         </h1>
-
-        <p
-          style={{
-            fontFamily: 'var(--mk-sans)',
-            fontSize: 18,
-            color: '#ef7519',
-            textAlign: 'center',
-            margin: '4px 0 0 0',
-          }}
-        >
+        <p className="font-sans text-[20px] text-[#ef7519] mt-2 mb-0">
           save resources, save lives
         </p>
       </div>
 
-      {/* Steps section */}
-      <div
-        style={{
-          marginTop: 24,
-          paddingLeft: 16,
-          paddingRight: 16,
-          position: 'relative',
-          flex: 1,
-          minHeight: 0,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {STEPS.map((step, idx) => {
-          const isBottom = step.number === 0;
-          const isFirst = idx === 0;
-          const marginTop = isFirst ? 0 : -30;
-          return (
+      {/* Folder stack + hero */}
+      <div className="flex-1 flex flex-col min-h-0 px-[13px]">
+        {FOLDERS.map((folder, idx) => (
+          <div
+            key={folder.number}
+            className="relative shrink-0"
+            style={{ height: CARD_H, marginTop: idx === 0 ? 0 : -OVERLAP, zIndex: folder.order }}
+          >
+            {/* Folder tab — peeks above the card in front when stacked */}
             <div
-              key={step.number}
-              style={{
-                position: 'relative',
-                zIndex: step.zIndex,
-                marginTop,
-                borderRadius: isBottom ? '20px 20px 0 0' : 20,
-                background: step.bg,
-                minHeight: isBottom ? undefined : 110,
-                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
-                padding: isBottom
-                  ? '29px 20px'
-                  : isFirst
-                  ? '29px 20px'
-                  : '29px 20px',
-                // marginBottom: isBottom ? 0 : 30,
-                flex: isBottom ? 1 : undefined,
-                ...(isBottom && { marginLeft: -16, marginRight: -16 }),
-              }}
+              className="absolute right-0 top-0 rounded-t-[12px]"
+              style={{ width: '43%', height: 46, background: folder.bg }}
+            />
+            {/* Card body */}
+            <div
+              className="absolute inset-x-0 bottom-0 rounded-[20px] overflow-hidden"
+              style={{ top: 10, background: folder.bg, boxShadow: '0 6px 2px rgba(0,0,0,0.25)' }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div
-                  style={{
-                    width: 26, height: 26, borderRadius: '50%',
-                    background: 'rgba(20,20,20,0.75)', color: '#fff',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 14, fontWeight: 700, flexShrink: 0,
-                  }}
-                >
-                  {step.number}
-                </div>
-                <span style={{ flex: 1, fontSize:  isBottom ? 28 : 23, fontFamily: 'var(--display)', fontWeight: isBottom ? 650 : 400, color: '#1a1008' }}>
-                  {step.label}
+              {/* Visible content strip — exactly matches the 46px that stays visible above the overlap */}
+              <div className="flex items-center h-[46px] px-5 pt-5">
+                <folder.Icon className="w-[26px] h-[26px] shrink-0 text-black" />
+                <span className="ml-3 font-display text-[22px] text-black flex-1">
+                  {folder.label}
                 </span>
-                <div style={{
-                  background: 'rgba(20,20,20,0.75)', color: '#fff',
-                  borderRadius: 20, padding: '3px 10px',
-                  fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
-                  display: 'flex', alignItems: 'center', gap: 4,
-                }}>
-                  20s
-                </div>
               </div>
-
-              {isBottom && step.description && (
-                <ul style={{ margin: '18px 0 0 38px', padding: 0, listStyle: 'disc', color: '#1a1008', fontSize: 18, lineHeight: 1.8 }}>
-                  {step.description.map((line) => (
-                    <li key={line} style={{ marginBottom: 2 }}>{line}</li>
-                  ))}
-                </ul>
-              )}
-
-              {isBottom && (
-                <div style={{ marginTop: 'auto', paddingTop: 24, display: 'flex', justifyContent: 'center' }}>
-                  <button
-                    onClick={onStart}
-                    style={{
-                      width: '80%', height: 48,
-                      background: 'rgba(9,9,9,0.85)', color: '#fff',
-                      border: 'none', borderRadius: 24,
-                      fontSize: 18, fontFamily: 'var(--mk-sans)', cursor: 'pointer',
-                      letterSpacing: '0.01em',
-                    }}
-                  >
-                    Get Started →
-                  </button>
-                </div>
-              )}
+              {/* Watermark number — decorative, fills the hidden lower portion */}
+              <span
+                className="absolute right-5 font-display italic text-[90px] leading-none pointer-events-none"
+                style={{ top: '-8px', opacity: 0.08, ...gradientTextStyle }}
+              >
+                {folder.number}
+              </span>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        ))}
 
+        {/* Hero: Reaching the survivor */}
+        <div
+          className="flex-1 relative mx-[-13px]"
+          style={{ marginTop: -OVERLAP, zIndex: 5 }}
+        >
+          {/* Folder tab */}
+          <div
+            className="absolute right-0 top-0 rounded-tl-[34px] rounded-tr-[12px]"
+            style={{ width: '43%', height: 46, background: '#FFC541' }}
+          />
+          {/* Card body */}
+          <div
+            className="absolute inset-x-0 bottom-0 flex flex-col"
+            style={{ top: 20, background: '#FFC541', borderRadius: '20px 20px 0 0', boxShadow: '0 6px 2px rgba(0,0,0,0.25)' }}
+          >
+            {/* Watermark "1" */}
+            <span
+              className="absolute right-6 font-display italic text-[120px] leading-none pointer-events-none"
+              style={{ top: '-20px', opacity: 0.08, ...gradientTextStyle }}
+            >
+              1
+            </span>
+
+            {/* Heading */}
+            <div className="relative px-6 flex items-center gap-3 mb-3 pt-9">
+              <UserIcon className="w-[28px] h-[28px] shrink-0 text-black" />
+              <h2 className="font-display font-medium text-[32px] text-black m-0 leading-tight whitespace-nowrap" style={{ letterSpacing: '-0.5px' }}>
+                Reaching the survivor
+              </h2>
+            </div>
+
+            {/* Description */}
+            <p className="relative font-sans text-[18px] text-black leading-[1.45] m-0 px-6" style={{ letterSpacing: '-0.5px' }}>
+              You will be guided through the process of setting up and moving the robot. Relevant
+              data will be collected automatically.
+            </p>
+
+            {/* Next button */}
+            <div className="relative mt-auto px-5 pt-5 pb-7 flex justify-center">
+              <button
+                onClick={onStart}
+                className="flex items-center justify-center gap-2 h-12 bg-[rgba(9,9,9,0.9)] text-white rounded-[20px] text-[20px] font-display border-none cursor-pointer"
+                style={{ width: '82%' }}
+              >
+                Next
+                <ArrowRightCircleIcon className="w-[18px] h-[18px]" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

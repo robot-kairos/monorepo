@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-const FONT     = 'var(--sans)';
 const GRADIENT = 'linear-gradient(180deg, #ff8b3a 0%, #f7c37f 40%, #edebde 100%)';
 
 // rotate(+90deg) axis mapping: CSS top→visual right, bottom→visual left, right→visual bottom/home, left→visual top/notch
@@ -18,14 +17,15 @@ const WATERMARK_POSITIONS = [
 
 function Watermark() {
   return (
-    <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
       {WATERMARK_POSITIONS.map((pos, i) => (
-        <span key={i} style={{
-          position: 'absolute', top: pos.top, left: pos.left,
-          fontSize: 80, fontFamily: 'var(--display)', fontStyle: 'italic', fontWeight: 700,
-          color: '#fff', opacity: 0.12, transform: 'rotate(-17deg)',
-          whiteSpace: 'nowrap', userSelect: 'none',
-        }}>MedKit</span>
+        <span
+          key={i}
+          className="absolute text-[80px] font-display italic font-bold text-white opacity-[0.12] select-none whitespace-nowrap"
+          style={{ top: pos.top, left: pos.left, transform: 'rotate(-17deg)' }}
+        >
+          MedKit
+        </span>
       ))}
     </div>
   );
@@ -37,6 +37,26 @@ const INSTRUCTION_BOXES: { status: 'reject' | 'accept' | 'active' }[] = [
   { status: 'active' },
 ];
 
+const innerLayout: React.CSSProperties = {
+  width: '100dvh',
+  height: '100dvw',
+  transform: 'rotate(90deg)',
+  background: GRADIENT,
+  fontFamily: 'var(--sans)',
+  userSelect: 'none',
+  paddingTop: SA_TOP,
+  paddingRight: `calc(${SA_RIGHT} + 56px)`,
+  paddingBottom: SA_BOTTOM,
+  paddingLeft: SA_LEFT,
+  boxSizing: 'border-box',
+  gap: 12,
+};
+
+const pillBtnStyle: React.CSSProperties = {
+  position: 'absolute',
+  right: 12, top: 80, bottom: 14, width: 44,
+};
+
 export function MedicalFeedbackPage({ onDone }: { onDone: () => void }) {
   const [notified, setNotified] = useState(false);
 
@@ -45,107 +65,70 @@ export function MedicalFeedbackPage({ onDone }: { onDone: () => void }) {
     return () => { document.body.style.backgroundColor = ''; };
   }, []);
 
-  const outerStyle: React.CSSProperties = {
-    position: 'fixed', inset: 0,
-    background: GRADIENT,
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    overflow: 'hidden',
-  };
-
-  const innerStyle: React.CSSProperties = {
-    width: '100dvh', height: '100dvw', flexShrink: 0,
-    transform: 'rotate(90deg)',
-    background: GRADIENT,
-    fontFamily: FONT, userSelect: 'none',
-    position: 'relative',
-    display: 'flex', flexDirection: 'column',
-    paddingTop: SA_TOP,
-    paddingRight: `calc(${SA_RIGHT} + 56px)`,
-    paddingBottom: SA_BOTTOM,
-    paddingLeft: SA_LEFT,
-    boxSizing: 'border-box',
-    overflow: 'hidden',
-    gap: 12,
-  };
-
-  const pillBtn: React.CSSProperties = {
-    position: 'absolute',
-    right: 12, top: 80, bottom: 14, width: 44,
-    borderRadius: 24, border: 'none',
-    background: 'rgba(9,9,9,0.85)', color: '#fff',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    fontSize: 34, lineHeight: 1, cursor: 'pointer', zIndex: 1,
-  };
-
   if (notified) {
     return (
-      <div style={outerStyle}>
-        <div style={innerStyle}>
+      <div className="fixed inset-0 flex items-center justify-center overflow-hidden" style={{ background: GRADIENT }}>
+        <div className="shrink-0 relative flex flex-col overflow-hidden" style={innerLayout}>
           <Watermark />
-          <div style={{
-            position: 'relative', zIndex: 1,
-            flex: 1, display: 'flex', flexDirection: 'column',
-            alignItems: 'center', justifyContent: 'center', gap: 14,
-          }}>
-            <div style={{ fontSize: 48 }}>🔔</div>
-            <div style={{ fontSize: 26, fontWeight: 700, color: '#1a1008' }}>Help is coming!</div>
-            <div style={{ fontSize: 15, color: '#3a2010' }}>Do not attempt to move the debris</div>
+          <div className="relative z-[1] flex-1 flex flex-col items-center justify-center gap-3.5">
+            <div className="text-[48px]">🔔</div>
+            <div className="text-[26px] font-bold text-[#1a1008]">Help is coming!</div>
+            <div className="text-[15px] text-[#3a2010]">Do not attempt to move the debris</div>
           </div>
-          <button onClick={onDone} style={pillBtn}>›</button>
+          <button
+            onClick={onDone}
+            className="absolute rounded-3xl border-none bg-[rgba(9,9,9,0.85)] text-white flex items-center justify-center text-[34px] leading-none cursor-pointer z-[1]"
+            style={pillBtnStyle}
+          >
+            ›
+          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={outerStyle}>
-      <div style={innerStyle}>
+    <div className="fixed inset-0 flex items-center justify-center overflow-hidden" style={{ background: GRADIENT }}>
+      <div className="shrink-0 relative flex flex-col overflow-hidden" style={innerLayout}>
         <Watermark />
 
         {/* Title */}
-        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <h2 style={{ margin: '0 0 2px', fontSize: 22, fontWeight: 700, color: '#1a1008', lineHeight: 1.2 }}>
+        <div className="relative z-[1] text-center">
+          <h2 className="m-0 mb-0.5 text-[22px] font-bold text-[#1a1008] leading-[1.2]">
             Plz follow these instructions
           </h2>
-          <p style={{ margin: 0, fontSize: 14, color: '#3a2010' }}>for the rescue</p>
+          <p className="m-0 text-[14px] text-[#3a2010]">for the rescue</p>
         </div>
 
         {/* Instruction boxes */}
-        <div style={{
-          position: 'relative', zIndex: 1,
-          flex: 1, display: 'flex', gap: 12, minHeight: 0,
-        }}>
+        <div className="relative z-[1] flex-1 flex gap-3 min-h-0">
           {INSTRUCTION_BOXES.map((box, i) => (
-            <div key={i} style={{
-              flex: 1,
-              background: 'rgba(255,255,255,0.55)',
-              borderRadius: 16,
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'space-between',
-              padding: '12px 8px',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-              border: box.status === 'active' ? '3px solid #29a7ff' : '3px solid transparent',
-            }}>
-              <div style={{
-                fontSize: 12, color: 'rgba(0,0,0,0.25)', fontStyle: 'italic',
-                flex: 1, display: 'flex', alignItems: 'center',
-              }}>
+            <div
+              key={i}
+              className="flex-1 bg-[rgba(255,255,255,0.55)] rounded-2xl flex flex-col items-center justify-between py-3 px-2 shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
+              style={{ border: box.status === 'active' ? '3px solid #29a7ff' : '3px solid transparent' }}
+            >
+              <div className="text-[12px] text-[rgba(0,0,0,0.25)] italic flex-1 flex items-center">
                 Animation...
               </div>
-              <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: box.status === 'reject' ? '#ef4444' : '#22c55e',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: 'white', fontSize: 15, fontWeight: 700, flexShrink: 0,
-              }}>
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-[15px] font-bold shrink-0"
+                style={{ background: box.status === 'reject' ? '#ef4444' : '#22c55e' }}
+              >
                 {box.status === 'reject' ? '✕' : '✓'}
               </div>
             </div>
           ))}
         </div>
 
-        {/* Send Notification — right-side pill */}
-        <button onClick={() => setNotified(true)} style={pillBtn}>›</button>
+        {/* Send Notification */}
+        <button
+          onClick={() => setNotified(true)}
+          className="absolute rounded-3xl border-none bg-[rgba(9,9,9,0.85)] text-white flex items-center justify-center text-[34px] leading-none cursor-pointer z-[1]"
+          style={pillBtnStyle}
+        >
+          ›
+        </button>
       </div>
     </div>
   );

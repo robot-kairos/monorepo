@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --bg-0: oklch(0.14 0.012 250);
   --bg-1: oklch(0.18 0.012 250);
@@ -24,8 +26,34 @@
   --mk-card: #f0eee1;
   --mk-orange: #ef7519;
   --mk-text: #322116;
-  --mk-text-dim: rgba(0,0,0,0.6);
+  --mk-text-dim: rgba(0, 0, 0, 0.6);
   --mk-sans: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+@theme inline {
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-bg-3: var(--bg-3);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-fg: var(--fg);
+  --color-fg-dim: var(--fg-dim);
+  --color-fg-mute: var(--fg-mute);
+  --color-amber: var(--amber);
+  --color-amber-dim: var(--amber-dim);
+  --color-green: var(--green);
+  --color-green-dim: var(--green-dim);
+  --color-cyan: var(--cyan);
+  --color-red: var(--red);
+  --color-violet: var(--violet);
+  --color-mk-bg: var(--mk-bg);
+  --color-mk-card: var(--mk-card);
+  --color-mk-orange: var(--mk-orange);
+  --color-mk-text: var(--mk-text);
+  --font-mono: var(--mono);
+  --font-sans: var(--sans);
+  --font-display: var(--display);
 }
 
 *,
@@ -41,7 +69,7 @@ body {
   margin: 0;
   padding-top: env(safe-area-inset-top);
   padding-left: 0;
-  padding-right: 0
+  padding-right: 0;
   padding-bottom: env(safe-area-inset-bottom);
   background: var(--mk-bg);
   color: var(--fg);
