@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ManualsPage } from './UserManual';
 
 interface Props {
   onComplete: () => void;
@@ -133,8 +134,9 @@ function CameraFeed() {
 }
 
 export function StepExecutionPage({ onComplete, onBack }: Props) {
-  const [stepIdx, setStepIdx] = useState(0);
-  const [ptt, setPtt]         = useState(false);
+  const [stepIdx, setStepIdx]       = useState(0);
+  const [ptt, setPtt]               = useState(false);
+  const [showManual, setShowManual] = useState(false);
 
   const step = STEPS[stepIdx]!;
 
@@ -146,6 +148,10 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   function goBack() {
     if (stepIdx > 0) { setStepIdx(i => i - 1); return; }
     onBack();
+  }
+
+  if (showManual) {
+    return <ManualsPage onClose={() => setShowManual(false)} />;
   }
 
   return (
@@ -179,6 +185,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
             <PttButton ptt={ptt} setPtt={setPtt} />
 
             <button
+              onClick={() => setShowManual(true)}
               className="absolute flex items-center justify-center rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
               style={{
                 left: 12, bottom: 17,
