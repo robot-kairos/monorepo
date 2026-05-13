@@ -1,20 +1,17 @@
 import { useEffect, useRef } from 'react';
+import { ArrowLongRightIcon } from '@heroicons/react/24/solid';
 import { NextButton } from '../components/NextButton';
 
-const imgTexture     = "/tutorial-texture.png";
-const imgStep01Phone = "/tutorial-step01-phone.png";
-const imgStep01Scr   = "/tutorial-step01-scr.png";
-const imgStep01Arrow = "/tutorial-step01-arrow.svg";
-const imgStep02Ctrl  = "/tutorial-step02-ctrl.png";
-const imgStep02Arrow = "/tutorial-step02-arrow.svg";
-const imgStep03Ready = "/tutorial-step03-ready.png";
-const imgStep03Scr   = "/tutorial-step03-scr.png";
-const imgGreenDot    = "/tutorial-green-dot.svg";
+const imgTexture     = "/tutorial/texture.png";
+const imgStep01Phone = "/tutorial/step01-phone.png";
+const imgStep01Arrow = "/tutorial/step01-arrow.svg";
+const imgStep02Ctrl  = "/tutorial/step02-ctrl.png";
+const imgStep03Ready = "/tutorial/step03-ready.png";
+const imgStep03Scr   = "/tutorial/step03-scr.png";
 
 export const TUTORIAL_IMAGE_URLS = [
-  imgTexture, imgStep01Phone, imgStep01Scr, imgStep01Arrow,
-  imgStep02Ctrl, imgStep02Arrow, imgStep03Ready, imgStep03Scr,
-  imgGreenDot,
+  imgTexture, imgStep01Phone, imgStep01Arrow,
+  imgStep02Ctrl, imgStep03Ready, imgStep03Scr,
 ];
 
 // Watermark positions (absolute px within the 402-wide frame)
@@ -87,7 +84,7 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
 
         {/* Patient label */}
         <div className="absolute left-[37px] top-[133px] flex items-center gap-[11px] -translate-y-1/2">
-          <img src={imgGreenDot} alt="" className="w-[11px] h-[11px] block" />
+          <span className="w-[11px] h-[11px] rounded-full block shrink-0" style={{ background: '#0FB61B' }} />
           <span className="text-[16px] text-black font-sans leading-[26px]">{patientLabel}</span>
         </div>
 
@@ -130,10 +127,9 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
           className="absolute flex items-center justify-center"
           style={{ left: 77.15, top: 443, width: 31.996, height: 84.288 }}
         >
-          <img
-            src={imgStep02Arrow}
-            alt=""
-            style={{ width: 83.968, height: 31.123, transform: 'rotate(90.6deg)', objectFit: 'cover' }}
+          <ArrowLongRightIcon
+            style={{ width: 83.968, height: 31.123, transform: 'rotate(90.6deg)' }}
+            className="text-black"
           />
         </div>
 

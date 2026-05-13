@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { ClockIcon, QuestionMarkCircleIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { ArrowRightCircleIcon } from '@heroicons/react/24/outline';
 import { SurvivorProfile } from '../types';
 
 type TrappedSince = 'earthquake' | 'later' | 'unknown';
@@ -76,7 +78,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
 
           {/* Survivor badge */}
           <div className="absolute top-3 right-3 z-20 bg-[#ffe8cf] rounded-full px-3 py-1 flex items-center gap-1.5">
-            <img src={`${A}profile-icon.png`} className="w-3.5 h-3.5 opacity-70" alt="" />
+            <UserCircleIcon className="w-3.5 h-3.5 opacity-70 text-[#322116]" />
             <span className="text-[12px] font-medium" style={{ color: '#322116' }}>Survivor #{survivorCount}</span>
           </div>
 
@@ -87,7 +89,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
             <div className="bg-[#ffe8cf] rounded-[20px] px-4 py-3 mb-4">
               <div className="text-[12px] mb-1" style={{ color: '#5a3a1a' }}>Time since main earthquake</div>
               <div className="flex items-center gap-2">
-                <img src={`${A}clock-icon.svg`} className="w-6 h-6" alt="" />
+                <ClockIcon className="w-6 h-6 text-black/80" />
                 <span className="text-[22px] font-bold" style={{ color: 'rgba(0,0,0,0.8)' }}>{formatElapsed(elapsed)}</span>
               </div>
             </div>
@@ -100,7 +102,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
                   The beginning
                 </button>
                 <button onClick={() => setTrappedSince('unknown')} className={pill(trappedSince === 'unknown')}>
-                  <img src={`${A}question-trapped.svg`} className="w-[18px] h-[18px] shrink-0" alt="" />
+                  <QuestionMarkCircleIcon className="w-[18px] h-[18px] shrink-0 text-[#322318]/80" />
                   Unknown
                 </button>
               </div>
@@ -132,7 +134,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
                 <img src={`${A}male-symbol.svg`} className="w-[13px] h-[13px]" alt="" />
               </button>
               <button onClick={() => setGender('unknown')} className={pill(gender === 'unknown')}>
-                <img src={`${A}question-gender.svg`} className="w-[18px] h-[18px] shrink-0" alt="" />
+                <QuestionMarkCircleIcon className="w-[18px] h-[18px] shrink-0 text-[#322318]/80" />
                 Unknown
               </button>
             </div>
@@ -172,7 +174,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
                   ageGroup === 'unknown' ? 'bg-[#ffe0b8]' : 'bg-[rgba(246,246,246,0.35)]'
                 }`}
               >
-                <img src={`${A}question-age.svg`} className="w-[8px] h-[13px] shrink-0" alt="" />
+                <QuestionMarkCircleIcon className="w-[13px] h-[13px] shrink-0 text-[#322318]/80" />
                 Unknown
               </button>
             </div>
@@ -184,7 +186,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
                 className="bg-[rgba(9,9,9,0.82)] rounded-[20px] px-5 py-2.5 text-[16px] font-semibold cursor-pointer border-none flex items-center gap-2.5 !text-white"
               >
                 Create Profile
-                <img src={`${A}arrow-icon.svg`} className="w-[18px] h-[18px]" alt="" />
+                <ArrowRightCircleIcon className="w-[18px] h-[18px] text-white" />
               </button>
             </div>
           </div>
