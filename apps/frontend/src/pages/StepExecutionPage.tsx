@@ -1,8 +1,6 @@
 import { useState } from 'react';
-import { SurvivorProfile } from '../types';
 
 interface Props {
-  profile: SurvivorProfile;
   onComplete: () => void;
   onBack: () => void;
 }

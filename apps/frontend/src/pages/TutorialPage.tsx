@@ -84,17 +84,6 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
             style={{ width: 222.935, height: 222.935, transform: 'rotate(-90deg)', objectFit: 'cover' }}
           />
         </div>
-        {/* Step 01 — screen content overlay */}
-        <div
-          className="absolute overflow-hidden rounded-[11px] flex items-center justify-center"
-          style={{ left: 44.34, top: 329.08, width: 163.022, height: 74.971 }}
-        >
-          <img
-            src={imgStep01Scr}
-            alt=""
-            style={{ width: 74.971, height: 163.022, transform: 'rotate(-90deg)', objectFit: 'cover', borderRadius: 11 }}
-          />
-        </div>
         {/* Step 01 — curved arrow */}
         <div
           className="absolute flex items-center justify-center"
