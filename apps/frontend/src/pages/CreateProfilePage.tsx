@@ -21,11 +21,6 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
   const [gender,       setGender]       = useState<Gender>('unknown');
   const [ageGroup,     setAgeGroup]     = useState<AgeGroup>('unknown');
 
-  useEffect(() => {
-    document.body.style.backgroundColor = '#efecde';
-    return () => { document.body.style.backgroundColor = ''; };
-  }, []);
-
   const baseOffsetMs = (3 * 3600 + 42 * 60) * 1000;
   const mountTimeRef = useRef<number>(Date.now() - baseOffsetMs);
   const [elapsed, setElapsed] = useState<number>(baseOffsetMs);
@@ -51,7 +46,11 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
     }`;
 
   return (
-    <div className="h-dvh flex items-stretch overflow-hidden font-sans bg-[#efecde] relative">
+    <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-[#efecde]">
+      <div
+        className="shrink-0 relative flex items-stretch overflow-hidden font-sans bg-[#efecde]"
+        style={{ width: '100dvh', height: '100dvw', transform: 'rotate(90deg)' }}
+      >
 
       {/* Orange left decoration */}
       <div className="absolute left-0 top-5 bottom-5 w-14 bg-[#e57321] rounded-[18px] z-0" />
@@ -201,6 +200,7 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
             Overview
           </span>
         </div>
+      </div>
       </div>
     </div>
   );
