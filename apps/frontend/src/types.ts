@@ -32,6 +32,13 @@ export const DEFAULT_STATE: RobotState = {
   playing: null,
 };
 
+export interface VideoStats {
+  fps: number;
+  kbps: number;
+  total_frames: number;
+  total_kb: number;
+}
+
 export type WsOutMessage =
   | { type: 'ptt_start' }
   | { type: 'ptt_stop' }

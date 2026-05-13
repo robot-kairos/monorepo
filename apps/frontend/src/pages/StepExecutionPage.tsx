@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useRobotWS } from '../hooks/useRobotWS';
 import { UserManualPage } from './UserManual';
 
 interface Props {
@@ -105,6 +106,41 @@ function RightRail({ color, onBack, onForward }: {
   );
 }
 
+function StreamStatsOverlay({ stats, connected }: { stats: { fps: number; kbps: number } | null; connected: boolean }) {
+  return (
+    <div
+      className="absolute z-[1] flex items-center gap-1.5 px-2.5 rounded-full text-[10px] font-mono tracking-wide"
+      style={{
+        bottom: 29,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        height: 22,
+        background: '#d9d4c1',
+        color: '#2b271f',
+        border: '1px solid rgba(0,0,0,0.08)',
+        opacity: OVERLAY_OPACITY,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span
+        style={{
+          width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
+          background: connected ? '#22c55e' : '#ef4444',
+        }}
+      />
+      {connected && stats ? (
+        <>
+          <span>{stats.fps} fps</span>
+          <span style={{ opacity: 0.35 }}>·</span>
+          <span>{stats.kbps} KB/s</span>
+        </>
+      ) : (
+        <span>offline</span>
+      )}
+    </div>
+  );
+}
+
 function CameraFeed() {
   const [err, setErr] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -148,6 +184,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   const [stepIdx, setStepIdx]       = useState(0);
   const [ptt, setPtt]               = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const { videoStats, connected }   = useRobotWS();
 
   const step = STEPS[stepIdx]!;
 
@@ -194,6 +231,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
             </div>
 
             <PttButton ptt={ptt} setPtt={setPtt} />
+            <StreamStatsOverlay stats={videoStats} connected={connected} />
 
             <button
               onClick={() => setShowManual(true)}

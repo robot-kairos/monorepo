@@ -174,8 +174,12 @@ manager = ConnectionManager()
 
 
 async def broadcast_loop() -> None:
+    tick = 0
     while True:
         await manager.broadcast(sensor.as_state_msg())
+        if tick % 2 == 0:
+            await manager.broadcast(json.dumps({"type": "video_stats", **stream_stats.snapshot()}))
+        tick += 1
         await asyncio.sleep(0.5)
 
 
