@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ManualsPage } from './UserManual';
+import { useEffect, useRef, useState } from 'react';
+import { UserManualPage } from './UserManual';
 
 interface Props {
   onComplete: () => void;
@@ -107,6 +107,17 @@ function RightRail({ color, onBack, onForward }: {
 
 function CameraFeed() {
   const [err, setErr] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // src is set here (not as a JSX prop) so the stream connection is tied to the effect lifecycle.
+  // Setting src in JSX would restart the connection on every Strict Mode remount, causing duplicates.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    img.src = '/video';
+    return () => { img.src = ''; };
+  }, []);
+
   return (
     <div
       className="relative w-full h-full overflow-hidden"
@@ -114,7 +125,7 @@ function CameraFeed() {
     >
       {!err && (
         <img
-          src="/video"
+          ref={imgRef}
           alt="camera feed"
           onError={() => setErr(true)}
           className="w-full h-full object-cover block"
@@ -151,7 +162,7 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   }
 
   if (showManual) {
-    return <ManualsPage onClose={() => setShowManual(false)} />;
+    return <UserManualPage onClose={() => setShowManual(false)} />;
   }
 
   return (

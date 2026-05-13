@@ -20,7 +20,7 @@ const STEPS = [
   { id: 2, label: 'Move the Arm Closer' },
 ];
 
-export function ManualsPage({ onClose, progress = 0.45 }: Props) {
+export function UserManualPage({ onClose, progress = 0.45 }: Props) {
   const pct = `${Math.max(0, Math.min(1, progress)) * 100}%`;
 
   return (
