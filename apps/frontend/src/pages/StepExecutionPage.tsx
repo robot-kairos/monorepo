@@ -114,7 +114,7 @@ function CameraFeed() {
     >
       {!err && (
         <img
-          src="http://localhost:8000/video"
+          src="/video"
           alt="camera feed"
           onError={() => setErr(true)}
           className="w-full h-full object-cover block"
