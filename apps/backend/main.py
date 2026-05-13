@@ -7,8 +7,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import threading
 from typing import Optional
+
+logger = logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
@@ -111,7 +114,7 @@ if _ROS2_IMPORTS_OK:
 def _ros_spin_thread(sensor_state: SensorState) -> None:
     global _bridge, ROS2_AVAILABLE
     if not _ROS2_IMPORTS_OK:
-        print("[WARN] ROS2 not available — running without robot bridge")
+        logger.warning("ROS2 not available — running without robot bridge")
         return
     try:
         rclpy.init()
@@ -119,7 +122,7 @@ def _ros_spin_thread(sensor_state: SensorState) -> None:
         ROS2_AVAILABLE = True
         rclpy.spin(_bridge)
     except Exception as e:
-        print(f"[WARN] ROS2 bridge failed: {e}")
+        logger.error("ROS2 bridge failed: %s", e)
     finally:
         ROS2_AVAILABLE = False
         if _bridge is not None:
