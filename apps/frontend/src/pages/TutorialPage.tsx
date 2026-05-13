@@ -1,15 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
-const imgTexture     = "https://www.figma.com/api/mcp/asset/be43bcc9-8322-45b1-8da2-07024385cf70";
-const imgStep01Phone = "https://www.figma.com/api/mcp/asset/c7700438-a224-4aa6-b1fe-a25fc9155553";
-const imgStep01Scr   = "https://www.figma.com/api/mcp/asset/80143c9c-7833-457c-a6f1-213e15ad3a35";
-const imgStep01Arrow = "https://www.figma.com/api/mcp/asset/85a6f5a0-8312-4a6c-b85b-9988b7c0f684";
-const imgStep02Ctrl  = "https://www.figma.com/api/mcp/asset/36066e66-b10a-443c-b0d3-206fdea791a5";
-const imgStep02Arrow = "https://www.figma.com/api/mcp/asset/2ea0795e-b8fa-4ed3-9d9e-d621267967cc";
-const imgStep03Ready = "https://www.figma.com/api/mcp/asset/582ac4d8-1973-4ba3-bddc-f75758e05b11";
-const imgStep03Scr   = "https://www.figma.com/api/mcp/asset/814ebf82-9638-4acf-b6a4-479a06395b1b";
-const imgArrowBtn    = "https://www.figma.com/api/mcp/asset/88c2f280-5283-440b-b491-aaacff538fc7";
-const imgGreenDot    = "https://www.figma.com/api/mcp/asset/6362d35e-005c-4996-b406-ac6d18e622bc";
+const imgTexture     = "/tutorial-texture.png";
+const imgStep01Phone = "/tutorial-step01-phone.png";
+const imgStep01Scr   = "/tutorial-step01-scr.png";
+const imgStep01Arrow = "/tutorial-step01-arrow.svg";
+const imgStep02Ctrl  = "/tutorial-step02-ctrl.png";
+const imgStep02Arrow = "/tutorial-step02-arrow.svg";
+const imgStep03Ready = "/tutorial-step03-ready.png";
+const imgStep03Scr   = "/tutorial-step03-scr.png";
+const imgArrowBtn    = "/tutorial-arrow-btn.svg";
+const imgGreenDot    = "/tutorial-green-dot.svg";
+
+export const TUTORIAL_IMAGE_URLS = [
+  imgTexture, imgStep01Phone, imgStep01Scr, imgStep01Arrow,
+  imgStep02Ctrl, imgStep02Arrow, imgStep03Ready, imgStep03Scr,
+  imgArrowBtn, imgGreenDot,
+];
 
 // Watermark positions (absolute px within the 402-wide frame)
 const WATERMARKS = [
@@ -21,14 +27,27 @@ const WATERMARKS = [
 ];
 
 export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext: () => void; patientLabel?: string }) {
+  const frameRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     document.body.style.backgroundColor = '#ff8b3a';
     return () => { document.body.style.backgroundColor = ''; };
   }, []);
 
+  useEffect(() => {
+    const update = () => {
+      if (!frameRef.current) return;
+      const scale = Math.min(window.innerWidth / 402, window.innerHeight / 874, 1);
+      frameRef.current.style.transform = `scale(${scale})`;
+    };
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+
   return (
     <div
-      className="min-h-dvh relative overflow-hidden flex justify-center font-sans"
+      className="h-dvh relative overflow-hidden flex justify-center font-sans"
       style={{ background: 'linear-gradient(180deg, #ff8b3a 0%, #f7c37f 42.3%, #edebde 100%)' }}
     >
       {/* Texture */}
@@ -57,8 +76,8 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
         ))}
       </div>
 
-      {/* Page frame — matches the 402×874 Figma canvas */}
-      <div className="relative z-[1] w-full max-w-[402px] h-[874px]">
+      {/* Page frame — 402×874 Figma canvas, scaled to fit viewport */}
+      <div ref={frameRef} className="relative z-[1] w-[402px] h-[874px] origin-top">
 
         {/* Patient label */}
         <div className="absolute left-[37px] top-[133px] flex items-center gap-[11px] -translate-y-1/2">

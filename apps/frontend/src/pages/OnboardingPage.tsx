@@ -1,4 +1,5 @@
 import { useEffect, type CSSProperties } from 'react';
+import { TUTORIAL_IMAGE_URLS } from './TutorialPage';
 import {
   CircleStackIcon,
   CameraIcon,
@@ -47,6 +48,10 @@ export function OnboardingPage({ onStart }: Props) {
       document.body.style.overflow = '';
       document.body.style.backgroundColor = '';
     };
+  }, []);
+
+  useEffect(() => {
+    TUTORIAL_IMAGE_URLS.forEach(src => { new Image().src = src; });
   }, []);
 
   return (
