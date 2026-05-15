@@ -9,11 +9,16 @@ from __future__ import annotations
 import asyncio
 import threading
 import time
+from collections import deque
 from typing import Optional
+
+import logging
 
 import cv2
 import numpy as np
 from fastapi.responses import StreamingResponse
+
+logger = logging.getLogger("uvicorn.error")
 
 import torch
 import torch.nn as nn
@@ -36,6 +41,9 @@ PERSON_CONF_THRESHOLD = 0.5
 MIN_W = 40
 MIN_H = 60
 
+MAX_STREAM_WIDTH = 640   # resize before encode + inference (saves bandwidth and CPU)
+JPEG_QUALITY     = 55    # down from 75 — acceptable for monitoring, ~35% smaller frames
+
 LABEL_COLS = [
     "open_wound",
     "swelling",
@@ -57,23 +65,36 @@ CLASS_THRESHOLDS = {
 # Load Models
 # =====================================================
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("Using device:", device)
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+    logger.warning("No GPU/MPS found: running inference on CPU, expect reduced performance")
 
-person_model = YOLO(YOLO_MODEL_PATH)
+logger.info("Torch inference will use %s device", device)
 
-injury_model = models.resnet18(weights=None)
-in_features = injury_model.fc.in_features
-injury_model.fc = nn.Linear(in_features, len(LABEL_COLS))
+try:
+    person_model = YOLO(YOLO_MODEL_PATH)
+except Exception as exc:
+    logger.critical("Failed to load YOLO model from %s: %s", YOLO_MODEL_PATH, exc)
+    raise SystemExit(1) from exc
 
-injury_model.load_state_dict(
-    torch.load(INJURY_MODEL_PATH, map_location=device)
-)
+try:
+    injury_model = models.resnet18(weights=None)
+    in_features = injury_model.fc.in_features
+    injury_model.fc = nn.Linear(in_features, len(LABEL_COLS))
+    injury_model.load_state_dict(
+        torch.load(INJURY_MODEL_PATH, map_location=device)
+    )
+    injury_model = injury_model.to(device)
+    injury_model.eval()
+except Exception as exc:
+    logger.critical("Failed to load injury model from %s: %s", INJURY_MODEL_PATH, exc)
+    raise SystemExit(1) from exc
 
-injury_model = injury_model.to(device)
-injury_model.eval()
-
-print("Models loaded successfully.")
+logger.info("DL models loaded successfully.")
 
 
 # =====================================================
@@ -186,78 +207,145 @@ def get_box_color(urgency):
         return (0, 255, 0)      # green
 
 
-def process_frame(frame):
-    frame_h, frame_w = frame.shape[:2]
+_DrawCmd = dict  # {x1, y1, x2, y2, color, text}
 
-    results = person_model(
-        frame,
-        conf=PERSON_CONF_THRESHOLD,
-        verbose=False
-    )
+
+def compute_detections(frame) -> list[_DrawCmd]:
+    """Run YOLO + injury inference. Returns draw commands; safe to call from any thread."""
+    frame_h, frame_w = frame.shape[:2]
+    commands: list[_DrawCmd] = []
+
+    results = person_model(frame, conf=PERSON_CONF_THRESHOLD, verbose=False, device=device)
 
     for result in results:
         boxes = result.boxes
-
         if boxes is None:
             continue
 
         for box in boxes:
-            cls_id = int(box.cls[0].item())
-            person_conf = float(box.conf[0].item())
-
-            if cls_id != PERSON_CLASS_ID:
+            if int(box.cls[0].item()) != PERSON_CLASS_ID:
                 continue
 
             x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+            x1, y1 = max(0, x1), max(0, y1)
+            x2, y2 = min(frame_w, x2), min(frame_h, y2)
 
-            x1 = max(0, x1)
-            y1 = max(0, y1)
-            x2 = min(frame_w, x2)
-            y2 = min(frame_h, y2)
-
-            w = x2 - x1
-            h = y2 - y1
-
-            if w < MIN_W or h < MIN_H:
+            if (x2 - x1) < MIN_W or (y2 - y1) < MIN_H:
                 continue
 
-            person_crop = frame[y1:y2, x1:x2]
-
-            if person_crop.size == 0:
+            crop = frame[y1:y2, x1:x2]
+            if crop.size == 0:
                 continue
 
-            detected_labels, all_results = predict_injury_from_crop(person_crop)
-
-            urgency = calculate_urgency(detected_labels)
-
+            detected_labels, _ = predict_injury_from_crop(crop)
+            urgency      = calculate_urgency(detected_labels)
             display_text = build_display_text(detected_labels, urgency)
+            box_color    = get_box_color(urgency)
 
-            box_color = get_box_color(urgency)
+            commands.append({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
+                             'color': box_color, 'text': display_text})
+    return commands
 
-            # Draw box around the person
-            cv2.rectangle(
-                frame,
-                (x1, y1),
-                (x2, y2),
-                box_color,
-                2
-            )
 
-            # Draw label background
-            text_x = x1
-            text_y = max(25, y1 - 10)
+def apply_detections(frame, commands: list[_DrawCmd]) -> None:
+    """Overlay pre-computed detection boxes onto frame in-place (fast, no ML)."""
+    for cmd in commands:
+        cv2.rectangle(frame, (cmd['x1'], cmd['y1']), (cmd['x2'], cmd['y2']), cmd['color'], 2)
+        cv2.putText(frame, cmd['text'], (cmd['x1'], max(25, cmd['y1'] - 10)),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, cmd['color'], 2)
 
-            cv2.putText(
-                frame,
-                display_text,
-                (text_x, text_y),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.6,
-                box_color,
-                2
-            )
 
-    return frame
+# ---------------------------------------------------------------------------
+# Inference worker — runs compute_detections in a dedicated thread so the
+# async generator never blocks on ML inference.
+# ---------------------------------------------------------------------------
+
+class InferenceWorker:
+    def __init__(self, camera: "CameraCapture") -> None:
+        self._camera   = camera
+        self._commands: list[_DrawCmd] = []
+        self._lock     = threading.Lock()
+        self._running  = False
+
+    def start(self) -> None:
+        self._running = True
+        threading.Thread(target=self._loop, daemon=True).start()
+
+    def stop(self) -> None:
+        self._running = False
+
+    def _loop(self) -> None:
+        while self._running:
+            frame = self._camera.raw_frame()
+            if frame is None:
+                time.sleep(0.033)
+                continue
+            h, w = frame.shape[:2]
+            if w > MAX_STREAM_WIDTH:
+                scale = MAX_STREAM_WIDTH / w
+                frame = cv2.resize(frame, (MAX_STREAM_WIDTH, int(h * scale)),
+                                   interpolation=cv2.INTER_AREA)
+            cmds = compute_detections(frame)
+            with self._lock:
+                self._commands = cmds
+
+    def get_commands(self) -> list[_DrawCmd]:
+        with self._lock:
+            return list(self._commands)
+
+
+_inference_worker: Optional[InferenceWorker] = None
+
+
+def start_inference_worker(camera: "CameraCapture") -> None:
+    global _inference_worker
+    _inference_worker = InferenceWorker(camera)
+    _inference_worker.start()
+
+
+# ---------------------------------------------------------------------------
+# Stream statistics
+# ---------------------------------------------------------------------------
+
+class StreamStats:
+    def __init__(self, window: int = 60) -> None:
+        self._lock = threading.Lock()
+        self._frame_times: deque[float] = deque(maxlen=window)
+        self._frame_sizes: deque[int]   = deque(maxlen=window)
+        self.total_frames = 0
+        self.total_bytes  = 0
+
+    def record(self, size_bytes: int) -> None:
+        now = time.monotonic()
+        with self._lock:
+            self._frame_times.append(now)
+            self._frame_sizes.append(size_bytes)
+            self.total_frames += 1
+            self.total_bytes  += size_bytes
+
+    def snapshot(self) -> dict:
+        with self._lock:
+            times = list(self._frame_times)
+            sizes = list(self._frame_sizes)
+            total_f = self.total_frames
+            total_b = self.total_bytes
+
+        if len(times) >= 2:
+            elapsed = times[-1] - times[0]
+            fps  = (len(times) - 1) / elapsed if elapsed > 0 else 0.0
+            kbps = (sum(sizes) / 1024) / elapsed       if elapsed > 0 else 0.0
+        else:
+            fps = kbps = 0.0
+
+        return {
+            "fps":          round(fps, 1),
+            "kbps":         round(kbps, 1),
+            "total_frames": total_f,
+            "total_kb":     round(total_b / 1024, 1),
+        }
+
+
+stream_stats = StreamStats()
 
 
 # ---------------------------------------------------------------------------
@@ -339,10 +427,16 @@ async def mjpeg_generator(camera: CameraCapture):
             frame_bytes = _placeholder_frame()
             await asyncio.sleep(0.1)
         else:
-            processed_frame = process_frame(frame)
-            ok, buf = cv2.imencode(".jpg", processed_frame, [cv2.IMWRITE_JPEG_QUALITY, 75])
+            h, w = frame.shape[:2]
+            if w > MAX_STREAM_WIDTH:
+                scale = MAX_STREAM_WIDTH / w
+                frame = cv2.resize(frame, (MAX_STREAM_WIDTH, int(h * scale)), interpolation=cv2.INTER_AREA)
+            if _inference_worker is not None:
+                apply_detections(frame, _inference_worker.get_commands())
+            ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
             frame_bytes = buf.tobytes() if ok else _placeholder_frame()
             await asyncio.sleep(interval)
+        stream_stats.record(len(frame_bytes))
         yield (
             _BOUNDARY
             + b"\r\nContent-Type: image/jpeg\r\nContent-Length: "

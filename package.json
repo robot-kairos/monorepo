@@ -5,10 +5,13 @@
     "apps/frontend"
   ],
   "scripts": {
-    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run server --workspace=apps/frontend\"",
-    "dev:backend": "cd apps/backend && uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000",
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
-    "build": "npm run build --workspace=apps/frontend"
+    "build": "npm run build --workspace=apps/frontend",
+    "start": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run prod:backend\" \"npm run prod:frontend\"",
+    "prod:backend": "cd apps/backend && uv run uvicorn main:app",
+    "prod:frontend": "npm run server --workspace=apps/frontend",
+    "dev": "concurrently --names \"backend,frontend\" --prefix-colors \"cyan,magenta\" \"npm run dev:backend\" \"npm run dev --workspace=apps/frontend\"",
+    "dev:backend": "cd apps/backend && uv run uvicorn main:app --reload",
+    "dev:frontend": "npm run dev --workspace=apps/frontend"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
