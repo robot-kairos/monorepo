@@ -275,7 +275,9 @@ class InferenceWorker:
         self._running = False
 
     def _loop(self) -> None:
+        _interval = 1.0 / _INFERENCE_FPS
         while self._running:
+            t0 = time.monotonic()
             frame = self._camera.raw_frame()
             if frame is None:
                 time.sleep(0.033)
@@ -288,6 +290,9 @@ class InferenceWorker:
             cmds = compute_detections(frame)
             with self._lock:
                 self._commands = cmds
+            remaining = _interval - (time.monotonic() - t0)
+            if remaining > 0:
+                time.sleep(remaining)
 
     def get_commands(self) -> list[_DrawCmd]:
         with self._lock:
@@ -386,7 +391,9 @@ class CameraCapture:
         cap.release()
 
     def _process_loop(self) -> None:
+        _interval = 1.0 / _FPS
         while self._running:
+            t0 = time.monotonic()
             with self._raw_lock:
                 frame = self._raw
                 self._raw = None
@@ -403,6 +410,9 @@ class CameraCapture:
             if ret:
                 with self._jpeg_lock:
                     self._jpeg = buf.tobytes()
+            remaining = _interval - (time.monotonic() - t0)
+            if remaining > 0:
+                time.sleep(remaining)
 
     def raw_frame(self) -> Optional[np.ndarray]:
         with self._raw_lock:
@@ -442,6 +452,7 @@ def _placeholder_frame() -> bytes:
 
 _BOUNDARY = b"--frame"
 _FPS = 30
+_INFERENCE_FPS = 5   # ML inference runs at most 5 fps to prevent CPU saturation
 
 
 async def mjpeg_generator(camera: CameraCapture):
