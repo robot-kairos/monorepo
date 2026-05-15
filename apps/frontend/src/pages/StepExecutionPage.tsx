@@ -184,6 +184,12 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   const [stepIdx, setStepIdx]       = useState(0);
   const [ptt, setPtt]               = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [helpExpanded, setHelpExpanded] = useState(true);
+
+  useEffect(() => {
+    const t = setTimeout(() => setHelpExpanded(false), 5000);
+    return () => clearTimeout(t);
+  }, []);
   const { videoStats, connected }   = useRobotWS();
 
   const step = STEPS[stepIdx]!;
@@ -235,16 +241,27 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
 
             <button
               onClick={() => setShowManual(true)}
-              className="absolute flex items-center justify-center rounded-full shadow-[0_1px_4px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
+              className="absolute flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.08)] cursor-pointer z-[1] overflow-hidden"
               style={{
                 left: 12, bottom: 17,
-                width: 60, height: 60,
+                height: 60,
+                width: helpExpanded ? 160 : 60,
+                borderRadius: helpExpanded ? 30 : '50%',
                 border: '1px solid rgba(0,0,0,0.08)',
                 background: '#d9d4c1',
                 opacity: OVERLAY_OPACITY,
+                transition: 'width 0.4s ease, border-radius 0.4s ease',
+                whiteSpace: 'nowrap',
               }}
             >
-              <span className="text-[26px] font-bold text-[#2b271f] leading-none">?</span>
+              <span
+                className="text-[19px] font-semibold text-[#2b271f] px-4 absolute"
+                style={{ opacity: helpExpanded ? 1 : 0, transition: 'opacity 0.25s ease' }}
+              >First time? <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style={{ width: 18, height: 18, display: 'inline', verticalAlign: 'top', marginLeft: 2, marginTop: 3 }}><path d="M9 11.24V7.5C9 6.12 10.12 5 11.5 5S14 6.12 14 7.5v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.21 0-.62-.38-1.16-.91-1.41z"/></svg></span>
+              <span
+                className="text-[26px] font-bold text-[#2b271f] leading-none absolute"
+                style={{ opacity: helpExpanded ? 0 : 1, transition: 'opacity 0.25s ease 0.15s' }}
+              >?</span>
             </button>
 
             <RightRail color={step.color} onBack={goBack} onForward={goForward} />
