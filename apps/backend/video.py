@@ -355,37 +355,62 @@ stream_stats = StreamStats()
 class CameraCapture:
     def __init__(self, device: int = 0) -> None:
         self._device = device
-        self._frame: Optional[np.ndarray] = None
-        self._lock = threading.Lock()
+        self._raw: Optional[np.ndarray] = None
+        self._jpeg: Optional[bytes] = None
+        self._raw_lock = threading.Lock()
+        self._jpeg_lock = threading.Lock()
         self._running = False
 
     def start(self) -> None:
         self._running = True
-        t = threading.Thread(target=self._loop, daemon=True)
-        t.start()
+        threading.Thread(target=self._grab_loop, daemon=True).start()
+        threading.Thread(target=self._process_loop, daemon=True).start()
 
     def stop(self) -> None:
         self._running = False
 
-    def _loop(self) -> None:
+    def _grab_loop(self) -> None:
         cap = cv2.VideoCapture(self._device)
         if not cap.isOpened():
+            print(f"[camera] failed to open device {self._device}")
             cap.release()
             return
+        cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
         while self._running:
             ok, frame = cap.read()
             if ok:
-                with self._lock:
-                    self._frame = frame
+                with self._raw_lock:
+                    self._raw = frame
             else:
-                time.sleep(0.033)
+                time.sleep(0.005)
         cap.release()
 
+    def _process_loop(self) -> None:
+        while self._running:
+            with self._raw_lock:
+                frame = self._raw
+                self._raw = None
+            if frame is None:
+                time.sleep(0.005)
+                continue
+            h, w = frame.shape[:2]
+            if w > MAX_STREAM_WIDTH:
+                scale = MAX_STREAM_WIDTH / w
+                frame = cv2.resize(frame, (MAX_STREAM_WIDTH, int(h * scale)), interpolation=cv2.INTER_AREA)
+            if _inference_worker is not None:
+                apply_detections(frame, _inference_worker.get_commands())
+            ret, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
+            if ret:
+                with self._jpeg_lock:
+                    self._jpeg = buf.tobytes()
+
     def raw_frame(self) -> Optional[np.ndarray]:
-        with self._lock:
-            if self._frame is None:
-                return None
-            return self._frame.copy()
+        with self._raw_lock:
+            return self._raw.copy() if self._raw is not None else None
+
+    def latest_jpeg(self) -> Optional[bytes]:
+        with self._jpeg_lock:
+            return self._jpeg
 
 
 # ---------------------------------------------------------------------------
@@ -422,20 +447,7 @@ _FPS = 30
 async def mjpeg_generator(camera: CameraCapture):
     interval = 1 / _FPS
     while True:
-        frame = camera.raw_frame()
-        if frame is None:
-            frame_bytes = _placeholder_frame()
-            await asyncio.sleep(0.1)
-        else:
-            h, w = frame.shape[:2]
-            if w > MAX_STREAM_WIDTH:
-                scale = MAX_STREAM_WIDTH / w
-                frame = cv2.resize(frame, (MAX_STREAM_WIDTH, int(h * scale)), interpolation=cv2.INTER_AREA)
-            if _inference_worker is not None:
-                apply_detections(frame, _inference_worker.get_commands())
-            ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
-            frame_bytes = buf.tobytes() if ok else _placeholder_frame()
-            await asyncio.sleep(interval)
+        frame_bytes = camera.latest_jpeg() or _placeholder_frame()
         stream_stats.record(len(frame_bytes))
         yield (
             _BOUNDARY
@@ -445,6 +457,7 @@ async def mjpeg_generator(camera: CameraCapture):
             + frame_bytes
             + b"\r\n"
         )
+        await asyncio.sleep(interval)
 
 
 def video_feed_response(camera: CameraCapture) -> StreamingResponse:

@@ -168,7 +168,7 @@ class ConnectionManager:
 # App
 # ---------------------------------------------------------------------------
 
-camera = CameraCapture(device=0)
+camera = CameraCapture(device=2)
 sensor = SensorState()
 manager = ConnectionManager()
 
