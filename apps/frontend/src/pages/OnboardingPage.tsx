@@ -42,10 +42,8 @@ const gradientTextStyle: CSSProperties = {
 
 export function OnboardingPage({ onStart }: Props) {
   useEffect(() => {
-    document.body.style.overflow = 'hidden';
     document.body.style.backgroundColor = '#f1efe3';
     return () => {
-      document.body.style.overflow = '';
       document.body.style.backgroundColor = '';
     };
   }, []);

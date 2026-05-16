@@ -28,12 +28,8 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
 
   useEffect(() => {
     document.body.style.backgroundColor = '#ff8b3a';
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
     return () => {
       document.body.style.backgroundColor = '';
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
     };
   }, []);
 
