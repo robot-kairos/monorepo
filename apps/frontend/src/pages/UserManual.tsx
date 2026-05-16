@@ -1,6 +1,5 @@
-// rotate(+90deg) axis mapping: CSS top→visual left (notch), right→visual bottom (home), bottom→visual right, left→visual top
-const SA_LEFT   = 'max(20px, env(safe-area-inset-top))';
-const SA_RIGHT  = 'max(12px, env(safe-area-inset-bottom))';
+const SA_LEFT   = 'max(20px, env(safe-area-inset-left))';
+const SA_RIGHT  = 'max(12px, env(safe-area-inset-right))';
 
 const BG            = '#f0eee1';
 const CARD_BG       = '#fff';
@@ -29,11 +28,8 @@ export function UserManualPage({ onClose, progress = 0.45 }: Props) {
       style={{ background: BG }}
     >
       <div
-        className="shrink-0 relative"
+        className="relative w-full h-full"
         style={{
-          width: '100dvh',
-          height: '100dvw',
-          transform: 'rotate(90deg)',
           background: BG,
           fontFamily: 'var(--display)',
         }}

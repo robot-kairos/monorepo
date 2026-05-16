@@ -18,8 +18,10 @@ const A = '/create-profile/';
 export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProfile) => void }) {
   const survivorCount = 3;
   const [trappedSince, setTrappedSince] = useState<TrappedSince>('unknown');
+  const [trappedNote, setTrappedNote] = useState('');
   const [gender, setGender] = useState<Gender>('unknown');
   const [ageGroup, setAgeGroup] = useState<AgeGroup>('unknown');
+  const typeInputRef = useRef<HTMLInputElement>(null);
 
   const baseOffsetMs = (3 * 3600 + 42 * 60) * 1000;
   const mountTimeRef = useRef<number>(Date.now() - baseOffsetMs);
@@ -30,10 +32,18 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
     return () => clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    if (trappedSince === 'later') {
+      const t = setTimeout(() => typeInputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [trappedSince]);
+
   function handleCreate() {
     onComplete({
       id: `${survivorCount}`,
       trappedSince, gender, ageGroup,
+      trappedNote: trappedSince === 'later' ? trappedNote : undefined,
       earthquakeTime: new Date(mountTimeRef.current),
     });
   }
@@ -45,11 +55,8 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
     }`;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center overflow-hidden bg-[#efecde]">
-      <div
-        className="shrink-0 relative flex items-stretch overflow-hidden font-sans bg-[#efecde]"
-        style={{ width: '100dvh', height: '100dvw', transform: 'rotate(90deg)' }}
-      >
+    <div className="fixed inset-0 overflow-hidden bg-[#efecde]">
+      <div className="relative w-full h-full flex items-stretch overflow-hidden font-sans bg-[#efecde]">
 
         <div
           className="absolute bottom-52 right-10 w-18 h-[120px] rounded-r-[15px] flex justify-center pl-8 pt-5 overflow-hidden shadow-[2px_3px_8px_rgba(100,75,30,0.28)]"
@@ -158,12 +165,24 @@ export function CreateProfilePage({ onComplete }: { onComplete: (p: SurvivorProf
                     Unknown
                   </button>
                 </div>
-                <button
-                  onClick={() => setTrappedSince('later')}
-                  className={`${pill(trappedSince === 'later')} !text-[rgba(0,0,0,0.38)] italic`}
-                >
-                  or, type here
-                </button>
+                {trappedSince === 'later' ? (
+                  <input
+                    ref={typeInputRef}
+                    type="text"
+                    value={trappedNote}
+                    onChange={e => setTrappedNote(e.target.value)}
+                    placeholder="specify when…"
+                    className="border border-[#322116] border-solid rounded-[20px] px-4 py-[7px] text-[15px] font-medium bg-[#ffe0b8] text-[rgba(0,0,0,0.8)] placeholder:text-[rgba(0,0,0,0.35)] outline-none w-full"
+                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
+                  />
+                ) : (
+                  <button
+                    onClick={() => setTrappedSince('later')}
+                    className={`${pill(false)} !text-[rgba(0,0,0,0.38)] italic`}
+                  >
+                    or, type here
+                  </button>
+                )}
               </div>
             </div>
 

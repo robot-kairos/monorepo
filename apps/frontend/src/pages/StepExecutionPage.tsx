@@ -5,6 +5,7 @@ import { UserManualPage } from './UserManual';
 interface Props {
   onComplete: () => void;
   onBack: () => void;
+  onMounted?: () => void;
 }
 
 const STEPS = [
@@ -17,6 +18,13 @@ const STEPS = [
 const FUTURE_TAB_BG   = '#e9e4cf';
 const FUTURE_TAB_TEXT = 'rgba(45, 40, 30, 0.38)';
 const OVERLAY_OPACITY = 0.6;
+
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 function ProgressTabs({ stepIdx }: { stepIdx: number }) {
   const visible = STEPS.slice(stepIdx);
@@ -36,7 +44,7 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
               border: active ? '1.3px solid #1e170d' : `1.3px solid ${FUTURE_TAB_TEXT}`,
               borderRight: active ? '1.3px solid #000' : `1.3px solid ${FUTURE_TAB_TEXT}`,
               borderRadius: i === 0 && last ? 7 : i === 0 ? '7px 6px 6px 7px' : last ? '6px 7px 7px 6px' : 6,
-              background: active ? step.color : FUTURE_TAB_BG,
+              background: active ? hexToRgba(step.color, OVERLAY_OPACITY) : hexToRgba(FUTURE_TAB_BG, OVERLAY_OPACITY),
               color: active ? '#1e170d' : FUTURE_TAB_TEXT,
               justifyContent: active && step.label !== 'REACH' ? 'flex-end' : 'center',
               boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.18)' : undefined,
@@ -54,7 +62,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
   return (
     <div
       className="absolute flex flex-col items-center gap-[3px] z-[1]"
-      style={{ right: 0, bottom: 17, width: 60, opacity: OVERLAY_OPACITY }}
+      style={{ right: -25, bottom: -5, width: 60 }}
     >
       <button
         onMouseDown={() => setPtt(true)}
@@ -66,7 +74,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
         style={{
           width: 60, height: 60,
           border: '1px solid rgba(0,0,0,0.08)',
-          background: ptt ? '#d5d0bd' : '#d9d4c1',
+          background: ptt ? hexToRgba('#d5d0bd', OVERLAY_OPACITY) : hexToRgba('#d9d4c1', OVERLAY_OPACITY),
         }}
       >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
@@ -88,7 +96,7 @@ function RightRail({ color, onBack, onForward }: {
       <button
         onClick={onBack}
         className="absolute flex items-center justify-center text-[30px] leading-none font-bold rounded-[34px] border-none cursor-pointer z-[1]"
-        style={{ right: 0, top: 17, width: 60, height: 48, background: color, color: '#2c220d', opacity: OVERLAY_OPACITY }}
+        style={{ right: -25, top: 15, width: 60, height: 48, background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d' }}
       >
         ‹
       </button>
@@ -96,8 +104,8 @@ function RightRail({ color, onBack, onForward }: {
         onClick={onForward}
         className="absolute flex items-center justify-center text-[34px] leading-none font-bold rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
         style={{
-          right: 0, top: 80, bottom: 92, width: 60,
-          background: color, color: '#2c220d', opacity: OVERLAY_OPACITY,
+          right: -25, top: 80, bottom: 71.5, width: 60,
+          background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d',
         }}
       >
         ›
@@ -180,13 +188,14 @@ function CameraFeed() {
   );
 }
 
-export function StepExecutionPage({ onComplete, onBack }: Props) {
+export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
   const [stepIdx, setStepIdx]       = useState(0);
   const [ptt, setPtt]               = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(true);
 
   useEffect(() => {
+    onMounted?.();
     const t = setTimeout(() => setHelpExpanded(false), 5000);
     return () => clearTimeout(t);
   }, []);
@@ -209,11 +218,8 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black flex items-center justify-center overflow-hidden">
-      <div
-        className="shrink-0 bg-black select-none font-sans"
-        style={{ width: '100dvh', height: '100dvw', transform: 'rotate(90deg)' }}
-      >
+    <div className="fixed inset-0 bg-black overflow-hidden">
+      <div className="relative w-full h-full bg-black select-none font-sans">
         <div className="relative w-full h-full overflow-hidden">
 
           <div className="absolute inset-0 z-0">
@@ -223,15 +229,15 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
           <div
             className="absolute z-[1]"
             style={{
-              top:    'env(safe-area-inset-right, 0px)',
-              right:  'env(safe-area-inset-bottom, 0px)',
-              bottom: 'env(safe-area-inset-left, 0px)',
-              left:   'env(safe-area-inset-top, 0px)',
+              top:    'env(safe-area-inset-top, 0px)',
+              right:  'env(safe-area-inset-right, 0px)',
+              bottom: 'env(safe-area-inset-bottom, 0px)',
+              left:   'env(safe-area-inset-left, 0px)',
             }}
           >
             <div
               className="absolute flex items-center gap-3 min-w-0"
-              style={{ left: 12, top: 17, right: 68, opacity: OVERLAY_OPACITY }}
+              style={{ left: 0, top: 24.5, right: 50 }}
             >
               <ProgressTabs stepIdx={stepIdx} />
             </div>
@@ -243,13 +249,12 @@ export function StepExecutionPage({ onComplete, onBack }: Props) {
               onClick={() => setShowManual(true)}
               className="absolute flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.08)] cursor-pointer z-[1] overflow-hidden"
               style={{
-                left: 12, bottom: 17,
+                left: 0, bottom: -5,
                 height: 60,
                 width: helpExpanded ? 160 : 60,
                 borderRadius: helpExpanded ? 30 : '50%',
                 border: '1px solid rgba(0,0,0,0.08)',
-                background: '#d9d4c1',
-                opacity: OVERLAY_OPACITY,
+                background: `rgba(217, 212, 193, ${OVERLAY_OPACITY})`,
                 transition: 'width 0.4s ease, border-radius 0.4s ease',
                 whiteSpace: 'nowrap',
               }}

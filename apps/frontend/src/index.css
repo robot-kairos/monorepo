@@ -108,6 +108,10 @@ button {
   background: var(--bg-3);
 }
 
+/* Orientation gates — applied via CSS so they react instantly without a JS render cycle */
+@media (orientation: landscape) { .hide-in-landscape { display: none !important; } }
+@media (orientation: portrait)  { .hide-in-portrait  { display: none !important; } }
+
 @keyframes sk-pulse {
   0%, 100% { opacity: 1; transform: scale(1); }
   50% { opacity: 0.35; transform: scale(0.85); }

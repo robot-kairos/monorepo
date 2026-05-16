@@ -81,6 +81,7 @@ export const DEFAULT_TWEAKS: Tweaks = {
 export interface SurvivorProfile {
   id: string;
   trappedSince: 'earthquake' | 'later' | 'unknown';
+  trappedNote?: string;
   gender: 'male' | 'female' | 'unknown';
   ageGroup: 'child' | 'adult' | 'elderly' | 'unknown';
   earthquakeTime: Date;
