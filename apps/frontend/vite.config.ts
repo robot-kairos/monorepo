@@ -11,7 +11,7 @@ export default defineConfig({
     allowedHosts: true,
     forwardConsole: true,
     proxy: {
-      '/video': {
+      '/webrtc': {
         target: 'http://localhost:8000',
         changeOrigin: true,
       },

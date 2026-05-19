@@ -37,6 +37,7 @@ export interface VideoStats {
   kbps: number;
   total_frames: number;
   total_kb: number;
+  latency_ms: number | null;
 }
 
 export type WsOutMessage =

@@ -1,22 +1,14 @@
-"""
-Video streaming module — MJPEG over HTTP.
-
-Uses an async generator so the event loop is never blocked, which prevents
-the stream from stalling after a period of inactivity.
-"""
+"""Video capture and frame processing module."""
 from __future__ import annotations
 
-import asyncio
 import threading
 import time
-from collections import deque
 from typing import Optional
 
 import logging
 
 import cv2
 import numpy as np
-from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -309,51 +301,6 @@ def start_inference_worker(camera: "CameraCapture") -> None:
 
 
 # ---------------------------------------------------------------------------
-# Stream statistics
-# ---------------------------------------------------------------------------
-
-class StreamStats:
-    def __init__(self, window: int = 60) -> None:
-        self._lock = threading.Lock()
-        self._frame_times: deque[float] = deque(maxlen=window)
-        self._frame_sizes: deque[int]   = deque(maxlen=window)
-        self.total_frames = 0
-        self.total_bytes  = 0
-
-    def record(self, size_bytes: int) -> None:
-        now = time.monotonic()
-        with self._lock:
-            self._frame_times.append(now)
-            self._frame_sizes.append(size_bytes)
-            self.total_frames += 1
-            self.total_bytes  += size_bytes
-
-    def snapshot(self) -> dict:
-        with self._lock:
-            times = list(self._frame_times)
-            sizes = list(self._frame_sizes)
-            total_f = self.total_frames
-            total_b = self.total_bytes
-
-        if len(times) >= 2:
-            elapsed = times[-1] - times[0]
-            fps  = (len(times) - 1) / elapsed if elapsed > 0 else 0.0
-            kbps = (sum(sizes) / 1024) / elapsed       if elapsed > 0 else 0.0
-        else:
-            fps = kbps = 0.0
-
-        return {
-            "fps":          round(fps, 1),
-            "kbps":         round(kbps, 1),
-            "total_frames": total_f,
-            "total_kb":     round(total_b / 1024, 1),
-        }
-
-
-stream_stats = StreamStats()
-
-
-# ---------------------------------------------------------------------------
 # Camera capture (background thread)
 # ---------------------------------------------------------------------------
 
@@ -362,8 +309,10 @@ class CameraCapture:
         self._device = device
         self._raw: Optional[np.ndarray] = None
         self._jpeg: Optional[bytes] = None
+        self._processed: Optional[np.ndarray] = None
         self._raw_lock = threading.Lock()
         self._jpeg_lock = threading.Lock()
+        self._processed_lock = threading.Lock()
         self._running = False
 
     def start(self) -> None:
@@ -406,6 +355,8 @@ class CameraCapture:
                 frame = cv2.resize(frame, (MAX_STREAM_WIDTH, int(h * scale)), interpolation=cv2.INTER_AREA)
             if _inference_worker is not None:
                 apply_detections(frame, _inference_worker.get_commands())
+            with self._processed_lock:
+                self._processed = frame.copy()
             ret, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, JPEG_QUALITY])
             if ret:
                 with self._jpeg_lock:
@@ -421,6 +372,10 @@ class CameraCapture:
     def latest_jpeg(self) -> Optional[bytes]:
         with self._jpeg_lock:
             return self._jpeg
+
+    def latest_processed(self) -> Optional[np.ndarray]:
+        with self._processed_lock:
+            return self._processed.copy() if self._processed is not None else None
 
 
 # ---------------------------------------------------------------------------
@@ -442,38 +397,5 @@ def _placeholder_frame() -> bytes:
     return buf.tobytes()
 
 
-# ---------------------------------------------------------------------------
-# Async MJPEG generator
-#
-# Using an async generator instead of a sync one is the key fix:
-# time.sleep() in a sync generator starves the ASGI event loop, causing the
-# stream to stall after a while. asyncio.sleep() yields control correctly.
-# ---------------------------------------------------------------------------
-
-_BOUNDARY = b"--frame"
 _FPS = 30
 _INFERENCE_FPS = 5   # ML inference runs at most 5 fps to prevent CPU saturation
-
-
-async def mjpeg_generator(camera: CameraCapture):
-    interval = 1 / _FPS
-    while True:
-        frame_bytes = camera.latest_jpeg() or _placeholder_frame()
-        stream_stats.record(len(frame_bytes))
-        yield (
-            _BOUNDARY
-            + b"\r\nContent-Type: image/jpeg\r\nContent-Length: "
-            + str(len(frame_bytes)).encode()
-            + b"\r\n\r\n"
-            + frame_bytes
-            + b"\r\n"
-        )
-        await asyncio.sleep(interval)
-
-
-def video_feed_response(camera: CameraCapture) -> StreamingResponse:
-    return StreamingResponse(
-        mjpeg_generator(camera),
-        media_type="multipart/x-mixed-replace; boundary=frame",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
-import { useRobotWS } from '../hooks/useRobotWS';
+import { useEffect, useState } from 'react';
+import { VideoStats } from '../types';
+import { useWebRTC } from '../hooks/useWebRTC';
 import { UserManualPage } from './UserManual';
 
 interface Props {
@@ -18,6 +19,11 @@ const STEPS = [
 const FUTURE_TAB_BG   = '#e9e4cf';
 const FUTURE_TAB_TEXT = 'rgba(45, 40, 30, 0.38)';
 const OVERLAY_OPACITY = 0.6;
+
+function formatSpeed(kbs: number): string {
+  if (kbs >= 1024) return `${(kbs / 1024).toFixed(1)} MB/s`;
+  return `${kbs} KB/s`;
+}
 
 function hexToRgba(hex: string, alpha: number): string {
   const r = parseInt(hex.slice(1, 3), 16);
@@ -114,12 +120,12 @@ function RightRail({ color, onBack, onForward }: {
   );
 }
 
-function StreamStatsOverlay({ stats, connected }: { stats: { fps: number; kbps: number } | null; connected: boolean }) {
+function StreamStatsOverlay({ stats, connected }: { stats: VideoStats | null; connected: boolean }) {
   return (
     <div
       className="absolute z-[1] flex items-center gap-1.5 px-2.5 rounded-full text-[10px] font-mono tracking-wide"
       style={{
-        bottom: 29,
+        bottom: -5,
         left: '50%',
         transform: 'translateX(-50%)',
         height: 22,
@@ -140,43 +146,33 @@ function StreamStatsOverlay({ stats, connected }: { stats: { fps: number; kbps: 
         <>
           <span>{stats.fps} fps</span>
           <span style={{ opacity: 0.35 }}>·</span>
-          <span>{stats.kbps} KB/s</span>
+          <span>{formatSpeed(stats.kbps)}</span>
+          {stats.latency_ms != null && (
+            <>
+              <span style={{ opacity: 0.35 }}>·</span>
+              <span>{stats.latency_ms}ms</span>
+            </>
+          )}
         </>
       ) : (
-        <span>offline</span>
+        <span>connecting</span>
       )}
     </div>
   );
 }
 
-function CameraFeed() {
-  const [err, setErr] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
-
-  // src is set here (not as a JSX prop) so the stream connection is tied to the effect lifecycle.
-  // Setting src in JSX would restart the connection on every Strict Mode remount, causing duplicates.
-  useEffect(() => {
-    const img = imgRef.current;
-    if (!img) return;
-    img.src = '/video';
-    return () => { img.src = ''; };
-  }, []);
-
+function CameraFeed({ videoRef, connected }: { videoRef: React.RefObject<HTMLVideoElement>; connected: boolean }) {
   return (
-    <div
-      className="relative w-full h-full overflow-hidden"
-      style={{ background: err ? 'linear-gradient(180deg, #51483e 0%, #2d2c2b 100%)' : '#111' }}
-    >
-      {!err && (
-        <img
-          ref={imgRef}
-          alt="camera feed"
-          onError={() => setErr(true)}
-          className="w-full h-full object-cover block"
-          style={{ filter: 'contrast(1.03) saturate(0.92)' }}
-        />
-      )}
-      {err && (
+    <div className="relative w-full h-full overflow-hidden" style={{ background: '#111' }}>
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        muted
+        className="w-full h-full object-cover block"
+        style={{ filter: 'contrast(1.03) saturate(0.92)', display: connected ? 'block' : 'none' }}
+      />
+      {!connected && (
         <div
           className="absolute inset-0 grid place-items-center text-[rgba(255,255,255,0.58)] text-[14px] tracking-[0.18em]"
           style={{ background: 'radial-gradient(circle at 50% 36%, rgba(255,255,255,0.08), transparent 28%), linear-gradient(180deg, #5a5148 0%, #2f2e2b 100%)' }}
@@ -199,7 +195,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
     const t = setTimeout(() => setHelpExpanded(false), 10000);
     return () => clearTimeout(t);
   }, []);
-  const { videoStats, connected }   = useRobotWS();
+  const { videoRef, connected: rtcConnected, videoStats } = useWebRTC();
 
   const step = STEPS[stepIdx]!;
 
@@ -223,7 +219,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
         <div className="relative w-full h-full overflow-hidden">
 
           <div className="absolute inset-0 z-0">
-            <CameraFeed />
+            <CameraFeed videoRef={videoRef} connected={rtcConnected} />
           </div>
 
           <div
@@ -243,7 +239,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
             </div>
 
             <PttButton ptt={ptt} setPtt={setPtt} />
-            <StreamStatsOverlay stats={videoStats} connected={connected} />
+            <StreamStatsOverlay stats={videoStats} connected={rtcConnected} />
 
             <button
               onClick={() => setShowManual(true)}

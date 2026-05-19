@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_STATE, LogEntry, RobotState, VideoStats, WsOutMessage } from '../types';
+import { DEFAULT_STATE, LogEntry, RobotState, WsOutMessage } from '../types';
 
 const WS_URL = `ws://${window.location.host}/ws`;
 
@@ -7,7 +7,6 @@ export function useRobotWS() {
   const [state, setState] = useState<RobotState>(DEFAULT_STATE);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [connected, setConnected] = useState(false);
-  const [videoStats, setVideoStats] = useState<VideoStats | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
@@ -50,8 +49,6 @@ export function useRobotWS() {
           }));
         } else if (msg.type === 'log') {
           setLog((prev) => [msg.entry as LogEntry, ...prev].slice(0, 50));
-        } else if (msg.type === 'video_stats') {
-          setVideoStats(msg as unknown as VideoStats);
         }
       } catch {
         // malformed message — ignore
@@ -75,5 +72,5 @@ export function useRobotWS() {
     }
   }, []);
 
-  return { state, log, send, connected, videoStats };
+  return { state, log, send, connected };
 }

@@ -1,7 +1,7 @@
 """
 Survivor Search Console — Backend
-- GET /video  : MJPEG webcam stream (falls back to placeholder if no camera)
-- WS  /ws     : Real-time sensor state + command bus
+- POST /webrtc/offer : WebRTC signaling (SDP offer/answer)
+- WS  /ws            : Real-time sensor state + command bus
 """
 from __future__ import annotations
 
@@ -16,7 +16,10 @@ logger = logging.getLogger("uvicorn.error")
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from video import CameraCapture, video_feed_response, stream_stats, start_inference_worker
+from pydantic import BaseModel
+
+from video import CameraCapture, start_inference_worker
+from webrtc_video import handle_offer, shutdown_all_peers
 
 try:
     import rclpy
@@ -174,12 +177,8 @@ manager = ConnectionManager()
 
 
 async def broadcast_loop() -> None:
-    tick = 0
     while True:
         await manager.broadcast(sensor.as_state_msg())
-        if tick % 2 == 0:
-            await manager.broadcast(json.dumps({"type": "video_stats", **stream_stats.snapshot()}))
-        tick += 1
         await asyncio.sleep(0.5)
 
 
@@ -211,16 +210,18 @@ async def on_startup() -> None:
 @app.on_event("shutdown")
 async def on_shutdown() -> None:
     camera.stop()
+    await shutdown_all_peers()
 
 
-@app.get("/video")
-def video_feed():
-    return video_feed_response(camera)
+class WebRTCOffer(BaseModel):
+    sdp: str
+    type: str
 
 
-@app.get("/video/stats")
-def video_stats():
-    return stream_stats.snapshot()
+@app.post("/webrtc/offer")
+async def webrtc_offer(offer: WebRTCOffer):
+    return await handle_offer(offer.sdp, offer.type, camera)
+
 
 
 @app.websocket("/ws")

@@ -11,7 +11,7 @@ export default defineConfig({
     allowedHosts: true,
     forwardConsole: true,
     proxy: {
-      '/video': {
+      '/webrtc': {
         target: 'http://robot-web:8000',
         changeOrigin: true,
       },
