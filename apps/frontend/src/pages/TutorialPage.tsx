@@ -70,7 +70,7 @@ export function TutorialPage({ onNext, patientLabel = 'Survivor #3' }: { onNext:
               backgroundClip: 'text',
             }}
           >
-            MedKit
+            Kairos
           </span>
         ))}
       </div>

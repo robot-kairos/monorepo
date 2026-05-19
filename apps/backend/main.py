@@ -1,5 +1,5 @@
 """
-Survivor Search Console — Backend
+Kairos — Backend
 - POST /webrtc/offer : WebRTC signaling (SDP offer/answer)
 - WS  /ws            : Real-time sensor state + command bus
 """
@@ -189,7 +189,7 @@ def _log_msg(lvl: str, text: str) -> str:
     return json.dumps({"type": "log", "entry": {"t": t, "lvl": lvl, "m": text}})
 
 
-app = FastAPI(title="Survivor Search Console API")
+app = FastAPI(title="Kairos API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -230,7 +230,7 @@ async def webrtc_offer(offer: WebRTCOffer):
 async def websocket_endpoint(websocket: WebSocket) -> None:
     await manager.connect(websocket)
     await websocket.send_text(sensor.as_state_msg())
-    await websocket.send_text(_log_msg("INFO", "Console connected — SENTRY system online"))
+    await websocket.send_text(_log_msg("INFO", "Kairos online"))
     try:
         while True:
             raw = await websocket.receive_text()

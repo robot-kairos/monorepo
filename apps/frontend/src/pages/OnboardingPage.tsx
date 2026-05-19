@@ -57,7 +57,7 @@ export function OnboardingPage({ onStart }: Props) {
       {/* Logo */}
       <div className="pt-10 pb-10 text-center shrink-0">
         <h1 className="font-display font-semibold text-[76px] text-[#ef7519] m-0 leading-none">
-          MedKit
+          Kairos
         </h1>
         <p className="font-sans text-[20px] text-[#ef7519] mt-2 mb-0">
           save resources, save lives
