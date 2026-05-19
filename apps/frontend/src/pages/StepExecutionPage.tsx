@@ -196,7 +196,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
 
   useEffect(() => {
     onMounted?.();
-    const t = setTimeout(() => setHelpExpanded(false), 5000);
+    const t = setTimeout(() => setHelpExpanded(false), 10000);
     return () => clearTimeout(t);
   }, []);
   const { videoStats, connected }   = useRobotWS();
