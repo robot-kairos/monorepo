@@ -18,7 +18,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from pydantic import BaseModel
 
-from video import CameraCapture, start_inference_worker
+from video import CameraCapture
+from inference import start_inference_worker
 from webrtc_video import handle_offer, shutdown_all_peers
 
 try:
@@ -201,7 +202,8 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup() -> None:
     camera.start()
-    start_inference_worker(camera)
+    worker = start_inference_worker(camera)
+    camera.commands_provider = worker.get_commands
     t = threading.Thread(target=_ros_spin_thread, args=(sensor,), daemon=True)
     t.start()
     asyncio.create_task(broadcast_loop())
