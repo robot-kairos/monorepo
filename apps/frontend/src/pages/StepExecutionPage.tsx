@@ -64,12 +64,45 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
   );
 }
 
-function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void }) {
+function PttButton({ ptt, setPtt, micMuted, toggleMic }: {
+  ptt: boolean;
+  setPtt: (v: boolean) => void;
+  micMuted: boolean;
+  toggleMic: () => void;
+}) {
   return (
     <div
-      className="absolute flex flex-col items-center gap-[3px] z-[1]"
+      className="absolute flex flex-col items-center gap-[10px] z-[1]"
       style={{ right: -25, bottom: -5, width: 60 }}
     >
+      <button
+        onClick={toggleMic}
+        className="rounded-full flex items-center justify-center shadow-[0_1px_4px_rgba(0,0,0,0.08)] cursor-pointer"
+        style={{
+          width: 44, height: 44,
+          border: '1px solid rgba(0,0,0,0.08)',
+          background: micMuted ? hexToRgba('#ef4444', OVERLAY_OPACITY) : hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+        }}
+        title={micMuted ? "Unmute Mic" : "Mute Mic"}
+      >
+        {micMuted ? (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        ) : (
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        )}
+      </button>
+
       <button
         onMouseDown={() => setPtt(true)}
         onMouseUp={() => setPtt(false)}
@@ -195,7 +228,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
     const t = setTimeout(() => setHelpExpanded(false), 10000);
     return () => clearTimeout(t);
   }, []);
-  const { videoRef, connected: rtcConnected, videoStats } = useWebRTC();
+  const { videoRef, connected: rtcConnected, videoStats, micMuted, toggleMic } = useWebRTC();
 
   const step = STEPS[stepIdx]!;
 
@@ -238,7 +271,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
               <ProgressTabs stepIdx={stepIdx} />
             </div>
 
-            <PttButton ptt={ptt} setPtt={setPtt} />
+            <PttButton ptt={ptt} setPtt={setPtt} micMuted={micMuted} toggleMic={toggleMic} />
             <StreamStatsOverlay stats={videoStats} connected={rtcConnected} />
 
             <button

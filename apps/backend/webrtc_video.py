@@ -11,6 +11,7 @@ from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.mediastreams import VideoStreamTrack
 
 from video import CameraCapture, _placeholder_frame
+from audio_bridge import RobotMicTrack, relay_browser_audio_to_esp32
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -53,7 +54,19 @@ async def handle_offer(sdp: str, type_: str, camera: CameraCapture) -> dict:
             async with _lock:
                 _peer_connections.discard(pc)
 
+    # Add video track
     pc.addTrack(RobotVideoTrack(camera))
+
+    # Add audio track (Robot Mic -> Browser)
+    robot_mic = RobotMicTrack()
+    pc.addTrack(robot_mic)
+
+    # Handle incoming audio (Browser Mic -> ESP32)
+    @pc.on("track")
+    def on_track(track):
+        if track.kind == "audio":
+            asyncio.create_task(relay_browser_audio_to_esp32(track))
+
     await pc.setRemoteDescription(RTCSessionDescription(sdp=sdp, type=type_))
     answer = await pc.createAnswer()
     await pc.setLocalDescription(answer)

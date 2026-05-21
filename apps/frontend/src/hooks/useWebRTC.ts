@@ -7,11 +7,13 @@ export function useWebRTC() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [connected, setConnected] = useState(false);
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null);
+  const [micMuted, setMicMuted] = useState(false);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const mountedRef = useRef(true);
   const prevBytesRef = useRef<number>(0);
   // Tracks cumulative inbound-rtp fields needed for per-interval deltas
   const prevRtpRef = useRef({ jbd: 0, jbc: 0, tdt: 0, fd: 0 });
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const connect = useCallback(async () => {
     if (!mountedRef.current) return;
@@ -25,7 +27,16 @@ export function useWebRTC() {
     pc.ontrack = (event) => {
       if (!mountedRef.current) return;
       const [stream] = event.streams;
-      if (videoRef.current && stream) videoRef.current.srcObject = stream;
+      if (event.track.kind === 'video' && videoRef.current && stream) {
+        videoRef.current.srcObject = stream;
+      }
+      if (event.track.kind === 'audio' && stream) {
+        if (!audioRef.current) {
+          audioRef.current = new Audio();
+          audioRef.current.autoplay = true;
+        }
+        audioRef.current.srcObject = stream;
+      }
     };
 
     pc.onconnectionstatechange = () => {
@@ -79,6 +90,16 @@ export function useWebRTC() {
       if (mountedRef.current) setVideoStats({ fps, kbps, total_frames, total_kb: Math.round(bytes / 1024), latency_ms });
     }, 1000);
 
+    // Request mic access
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+      stream.getAudioTracks().forEach(track => pc.addTrack(track, stream));
+    } catch (err) {
+      console.error('[useWebRTC] mic access failed:', err);
+      // Fallback: still add transceiver to receive audio from robot if possible
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+    }
+
     pc.addTransceiver('video', { direction: 'recvonly' });
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
@@ -119,8 +140,21 @@ export function useWebRTC() {
       mountedRef.current = false;
       pcRef.current?.close();
       pcRef.current = null;
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.srcObject = null;
+      }
     };
   }, [connect]);
 
-  return { videoRef, connected, videoStats };
+  const toggleMic = useCallback(() => {
+    if (!pcRef.current) return;
+    const newState = !micMuted;
+    setMicMuted(newState);
+    pcRef.current.getSenders()
+      .filter(s => s.track?.kind === 'audio')
+      .forEach(s => { if (s.track) s.track.enabled = !newState; });
+  }, [micMuted]);
+
+  return { videoRef, connected, videoStats, micMuted, toggleMic };
 }
