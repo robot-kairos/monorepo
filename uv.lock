@@ -6,10 +6,6 @@ resolution-markers = [
     "sys_platform != 'win32'",
 ]
 
-[options]
-exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
-exclude-newer-span = "P7D"
-
 [manifest]
 members = [
     "backend",
@@ -130,6 +126,10 @@ dependencies = [
     { name = "fastapi" },
     { name = "numpy" },
     { name = "opencv-python-headless" },
+    { name = "pillow" },
+    { name = "torch" },
+    { name = "torchvision" },
+    { name = "ultralytics" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -139,6 +139,10 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.136.1" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "opencv-python-headless", specifier = ">=4.13.0.92" },
+    { name = "pillow", specifier = ">=11.0.0" },
+    { name = "torch", specifier = ">=2.11.0" },
+    { name = "torchvision", specifier = ">=0.26.0" },
+    { name = "ultralytics", specifier = ">=8.4.46" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.46.0" },
 ]
 

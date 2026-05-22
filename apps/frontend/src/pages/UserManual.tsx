@@ -1,12 +1,21 @@
-const SA_LEFT   = 'max(20px, env(safe-area-inset-left))';
-const SA_RIGHT  = 'max(12px, env(safe-area-inset-right))';
+import { useState } from 'react';
 
-const BG            = '#f0eee1';
-const CARD_BG       = '#fff';
-const TEXT          = '#322318';
-const TEXT_DIM      = 'rgba(50,35,24,0.6)';
-const ORANGE        = '#fa9b52';
+const SA_LEFT  = 'max(20px, env(safe-area-inset-left))';
+const SA_RIGHT = 'env(safe-area-inset-right, 0px)';
+
+const BG             = '#f0eee1';
+const CARD_BG        = '#fff';
+const TEXT           = '#322318';
+const TEXT_DIM       = 'rgba(50,35,24,0.6)';
+const ORANGE         = '#fa9b52';
 const PROGRESS_TRACK = '#eedcbe';
+
+const MARGIN_V      = 24.5; // top & bottom margin; matches StepExecution progress-tabs top
+const RAIL_W        = 56;   // button width; bar is thinner (right-aligned inside)
+const BAR_W         = 20;   // vertical bar width
+const CARDS_TOP     = 100;  // slight extra gap below title to shorten cards
+
+const CONTENT_RIGHT = `calc(${SA_RIGHT} + ${RAIL_W + 14 - 25 - 13}px)`; // slightly narrower than max-wide
 
 interface Props {
   onClose?: () => void;
@@ -14,13 +23,33 @@ interface Props {
   progress?: number;
 }
 
-const STEPS = [
-  { id: 1, label: 'Move the Tank Forward' },
-  { id: 2, label: 'Move the Arm Closer' },
+const VIEWS = [
+  {
+    titleLines: ['Reach the Correct Position', 'before use of the arm'],
+    steps: [
+      { id: 1, label: 'Move the Tank Forward' },
+      { id: 2, label: 'Move the Arm Closer' },
+    ],
+  },
+  {
+    titleLines: ['Position the Arm Properly', 'before Data Collection'],
+    steps: [
+      { id: 1, label: '10cm to the Forehead' },
+      { id: 2, label: '10cm to the Chest' },
+    ],
+  },
 ];
 
-export function UserManualPage({ onClose, progress = 0.45 }: Props) {
-  const pct = `${Math.max(0, Math.min(1, progress)) * 100}%`;
+export function UserManualPage({ onClose, progress = 0.5 }: Props) {
+  const [viewIdx, setViewIdx] = useState(0);
+  const view = VIEWS[viewIdx]!;
+
+  function toggleView() {
+    setViewIdx(i => (i + 1) % VIEWS.length);
+  }
+
+  const barTrack = viewIdx === 0 ? ORANGE        : PROGRESS_TRACK;
+  const barFill  = viewIdx === 0 ? PROGRESS_TRACK : ORANGE;
 
   return (
     <div
@@ -29,40 +58,37 @@ export function UserManualPage({ onClose, progress = 0.45 }: Props) {
     >
       <div
         className="relative w-full h-full"
-        style={{
-          background: BG,
-          fontFamily: 'var(--display)',
-        }}
+        style={{ background: BG, fontFamily: 'var(--display)' }}
       >
         {/* Title */}
         <div
           className="absolute font-semibold uppercase"
           style={{
-            top: 20,
+            top: MARGIN_V,
             left: `calc(${SA_LEFT} + 4px)`,
-            right: 72,
+            right: CONTENT_RIGHT,
             fontSize: 22,
             letterSpacing: '-0.02em',
             lineHeight: 1.25,
             color: TEXT,
           }}
         >
-          Reach the Correct Position
+          {view.titleLines[0]}
           <br />
-          before use of the arm
+          {view.titleLines[1]}
         </div>
 
         {/* Step cards */}
         <div
           className="absolute flex gap-3"
           style={{
-            top: 88,
+            top: CARDS_TOP,
             left: `calc(${SA_LEFT} + 4px)`,
-            right: 72,
-            bottom: 20,
+            right: CONTENT_RIGHT,
+            bottom: MARGIN_V,
           }}
         >
-          {STEPS.map(step => (
+          {view.steps.map(step => (
             <div
               key={step.id}
               className="flex-1 relative rounded-[24px]"
@@ -76,6 +102,7 @@ export function UserManualPage({ onClose, progress = 0.45 }: Props) {
                   left: 12,
                   width: 26,
                   height: 26,
+                  background: BG,
                   border: `1.5px solid ${TEXT}`,
                   fontFamily: 'var(--sans)',
                   fontSize: 14,
@@ -89,10 +116,10 @@ export function UserManualPage({ onClose, progress = 0.45 }: Props) {
               <div
                 className="absolute uppercase"
                 style={{
-                  bottom: 14,
+                  bottom: 20,
                   left: 14,
                   right: 14,
-                  fontSize: 15,
+                  fontSize: 18,
                   letterSpacing: '-0.02em',
                   lineHeight: 1.3,
                   color: TEXT_DIM,
@@ -104,38 +131,64 @@ export function UserManualPage({ onClose, progress = 0.45 }: Props) {
           ))}
         </div>
 
-        {/* Right rail: close button + vertical progress bar */}
+        {/* Right rail: close button + two-segment progress bar */}
         <div
-          className="absolute flex flex-col items-center gap-3"
+          className="absolute flex flex-col items-center"
           style={{
-            top: 20,
-            right: `calc(${SA_RIGHT} + 8px)`,
-            bottom: 20,
-            width: 50,
+            top: 15,
+            right: `calc(${SA_RIGHT} - 25px)`,
+            bottom: MARGIN_V,
+            gap: 14,
+            width: RAIL_W,
           }}
         >
           <button
             onClick={onClose}
             className="shrink-0 flex items-center justify-center rounded-full border-none cursor-pointer"
             style={{
-              width: 50,
-              height: 50,
+              width: RAIL_W,
+              height: RAIL_W,
               background: 'rgba(0,0,0,0.82)',
               color: '#fff',
-              fontSize: 18,
             }}
           >
-            ✕
+            <svg
+              width="22" height="22" viewBox="0 0 22 22"
+              fill="none" stroke="currentColor"
+              strokeWidth="2.8" strokeLinecap="round"
+            >
+              <line x1="4" y1="4" x2="18" y2="18" />
+              <line x1="18" y1="4" x2="4" y2="18" />
+            </svg>
           </button>
 
+          {/* Two pill segments — tap to toggle view */}
           <div
-            className="flex-1 relative rounded-[20px] overflow-hidden"
-            style={{ width: 26, background: PROGRESS_TRACK }}
+            className="flex-1 flex flex-col gap-[6px] items-end w-full cursor-pointer"
+            onClick={toggleView}
           >
-            <div
-              className="absolute bottom-0 left-0 right-0 rounded-[20px]"
-              style={{ height: pct, background: ORANGE }}
-            />
+            {[1, 0].map(idx => {
+              const segFill = Math.max(0, Math.min(1, progress * 2 - idx));
+              return (
+                <div
+                  key={idx}
+                  className="flex-1 relative overflow-hidden"
+                  style={{
+                    width: BAR_W,
+                    background: barTrack,
+                    borderRadius: BAR_W / 2,
+                  }}
+                >
+                  <div
+                    className="absolute top-0 left-0 right-0"
+                    style={{
+                      height: `${segFill * 100}%`,
+                      background: barFill,
+                    }}
+                  />
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
