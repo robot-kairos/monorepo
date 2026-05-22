@@ -3,8 +3,11 @@ import { OnboardingPage } from './pages/OnboardingPage';
 import { TutorialPage } from './pages/TutorialPage';
 import { StepExecutionPage } from './pages/StepExecutionPage';
 import { CreateProfilePage } from './pages/CreateProfilePage';
+import { RecommendedActionsPage } from './pages/RecommendedActionsPage';
+import { EvaluationPage } from './pages/EvaluationPage';
+import { SurvivorProfile } from './types';
 
-type Screen = 'onboarding' | 'tutorial' | 'execution' | 'create-profile';
+type Screen = 'onboarding' | 'tutorial' | 'execution' | 'create-profile' | 'evaluation' | 'recommended-actions';
 
 function readIsWrongLandscape(): boolean {
   const wo = (window as Window & { orientation?: number }).orientation;
@@ -77,6 +80,7 @@ function preloadCreateProfile() {
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('onboarding');
+  const [profile, setProfile] = useState<SurvivorProfile | null>(null);
 
   return (
     <>
@@ -97,7 +101,17 @@ export default function App() {
       )}
       {screen === 'create-profile' && (
         <WithOrientation mode="landscape">
-          <CreateProfilePage onComplete={() => setScreen('onboarding')} />
+          <CreateProfilePage onComplete={(p) => { setProfile(p); setScreen('evaluation'); }} />
+        </WithOrientation>
+      )}
+      {screen === 'evaluation' && (
+        <WithOrientation mode="landscape">
+          <EvaluationPage onComplete={() => setScreen('recommended-actions')} />
+        </WithOrientation>
+      )}
+      {screen === 'recommended-actions' && profile && (
+        <WithOrientation mode="landscape">
+          <RecommendedActionsPage profile={profile} onComplete={() => setScreen('onboarding')} />
         </WithOrientation>
       )}
     </>

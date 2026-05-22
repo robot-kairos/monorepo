@@ -127,7 +127,7 @@ function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () 
     <div
       className="absolute z-[2] flex flex-col items-end"
       style={{
-        right: -25, top: 80, bottom: 71.5, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
+        right: -25, top: 63, bottom: 55, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
         paddingRight: 8, paddingTop: 10, paddingBottom: 10, gap: 16,
         justifyContent: 'center',
         background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
@@ -154,6 +154,142 @@ function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () 
       >
         Skip
       </button>
+    </div>
+  );
+}
+
+const QA_QUESTIONS = ["Can you hear me?"];
+type QAStatus = 'idle' | 'listening';
+
+function QAOverlay({ ptt: _ptt, onSkip }: { ptt: boolean; onSkip: () => void }) {
+  const [status, setStatus] = useState<QAStatus>('idle');
+
+  function handleCircleClick() {
+    if (status === 'idle') { setStatus('listening'); return; }
+    if (status === 'listening') { onSkip(); }
+  }
+
+  return (
+    <div
+      className="absolute z-[2] flex items-center gap-4"
+      style={{
+        top: 63, bottom: 55, right: -25,
+        height: 44, marginTop: 'auto', marginBottom: 'auto',
+        background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+        borderRadius: 22,
+        border: '1px solid rgba(0,0,0,0.10)',
+        paddingLeft: 12, paddingRight: 0,
+        whiteSpace: 'nowrap',
+      }}
+    >
+      <span style={{ fontSize: 19, fontWeight: 600, color: '#1e170d', marginLeft: 12 }}>
+        {QA_QUESTIONS[0]}
+      </span>
+      <button
+        onClick={handleCircleClick}
+        className="flex items-center justify-center cursor-pointer"
+        style={{
+          width: 44, height: 44, flexShrink: 0,
+          borderRadius: '50%',
+          border: '3px solid white',
+          background: 'transparent',
+        }}
+      >
+        {status === 'idle' && (
+          <div style={{ width: 31, height: 31, borderRadius: '50%', background: '#60afff' }} />
+        )}
+        {status === 'listening' && (
+          <div style={{ width: 18, height: 18, borderRadius: 4, background: '#e63946' }} />
+        )}
+      </button>
+    </div>
+  );
+}
+
+function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
+  const [phase, setPhase] = useState<'review' | 'capture'>('review');
+  const btnStyle = { width: 60, height: 40, borderRadius: 34, border: 'none', cursor: 'pointer', flexShrink: 0 } as const;
+
+  return (
+    <div
+      className="absolute z-[2] flex flex-col items-end justify-center"
+      style={{ right: -25, top: 63, bottom: 55 }}
+    >
+      {phase === 'capture' ? (
+        <div className="flex flex-col items-center" style={{ width: 60, gap: 16 }}>
+          <button
+            className="flex items-center justify-center"
+            style={{ ...btnStyle, background: hexToRgba('#8b6cff', OVERLAY_OPACITY) }}
+          >
+            <svg width="24" height="22" viewBox="0 0 24 22" fill="#111">
+              <path d="M9 0L7 3H2C.9 3 0 3.9 0 5v14c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-5L15 0H9zm3 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
+            </svg>
+          </button>
+
+          <button
+            className="flex items-center justify-center font-bold"
+            style={{ ...btnStyle, background: hexToRgba('#e63946', OVERLAY_OPACITY), color: '#111', fontSize: 15 }}
+          >
+            Skip
+          </button>
+
+          <button
+            onClick={onConfirm}
+            className="flex items-center justify-center font-bold text-[28px] leading-none"
+            style={{ ...btnStyle, background: hexToRgba('#84cc16', OVERLAY_OPACITY), color: '#111' }}
+          >
+            ›
+          </button>
+        </div>
+      ) : (
+        <div
+          className="relative flex flex-col"
+          style={{
+            width: 370, height: 152,
+            background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+            borderRadius: 16,
+            border: '1px solid rgba(0,0,0,0.08)',
+            padding: 10, paddingBottom: 10, gap: 0,
+          }}
+        >
+          <div className="flex flex-1 gap-3" style={{ paddingRight: 82 }}>
+            <div style={{ flex: 1, background: 'white', borderRadius: 10 }} />
+            <div style={{ flex: 1, background: 'white', borderRadius: 10 }} />
+          </div>
+
+          <button
+            onClick={() => setPhase('capture')}
+            className="absolute flex items-center justify-center border-none cursor-pointer font-semibold"
+            style={{ right: 10, top: '50%', transform: 'translateY(-50%)', background: hexToRgba('#8b6cff', OVERLAY_OPACITY), color: '#111', fontSize: 14, width: 72, height: 50, borderRadius: 25, whiteSpace: 'nowrap' }}
+          >
+            Got it!
+          </button>
+
+          <div className="flex" style={{ marginTop: -19 }}>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <button
+                className="rounded-full flex items-center justify-center border-none cursor-pointer"
+                style={{ width: 38, height: 38, background: hexToRgba('#e63946', OVERLAY_OPACITY) }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" stroke="white" strokeWidth="3" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+              <button
+                className="rounded-full flex items-center justify-center border-none cursor-pointer"
+                style={{ width: 38, height: 38, background: hexToRgba('#22c55e', OVERLAY_OPACITY) }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </button>
+            </div>
+            <div style={{ width: 80 }} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -303,8 +439,10 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
               >?</span>
             </button>
 
-            <RightRail color={step.color} onBack={goBack} onForward={goForward} showForward={step.label !== 'DATA'} />
+            <RightRail color={step.color} onBack={goBack} onForward={goForward} showForward={step.label !== 'DATA' && step.label !== 'QA' && step.label !== 'SHOT'} />
             {step.label === 'DATA' && <DataOverlay onConfirm={goForward} onSkip={goForward} />}
+            {step.label === 'QA' && <QAOverlay ptt={ptt} onSkip={goForward} />}
+            {step.label === 'SHOT' && <ShotOverlay onConfirm={onComplete} />}
           </div>
 
         </div>
