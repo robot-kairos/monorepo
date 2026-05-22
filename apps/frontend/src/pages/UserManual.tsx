@@ -131,65 +131,62 @@ export function UserManualPage({ onClose, progress = 0.5 }: Props) {
           ))}
         </div>
 
-        {/* Right rail: close button + two-segment progress bar */}
-        <div
-          className="absolute flex flex-col items-center"
+        {/* Close button — fixed position, unchanged */}
+        <button
+          onClick={onClose}
+          className="absolute flex items-center justify-center rounded-full border-none cursor-pointer"
           style={{
             top: 15,
             right: `calc(${SA_RIGHT} - 25px)`,
-            bottom: MARGIN_V,
-            gap: 14,
             width: RAIL_W,
+            height: RAIL_W,
+            background: 'rgba(0,0,0,0.82)',
+            color: '#fff',
           }}
         >
-          <button
-            onClick={onClose}
-            className="shrink-0 flex items-center justify-center rounded-full border-none cursor-pointer"
-            style={{
-              width: RAIL_W,
-              height: RAIL_W,
-              background: 'rgba(0,0,0,0.82)',
-              color: '#fff',
-            }}
+          <svg
+            width="22" height="22" viewBox="0 0 22 22"
+            fill="none" stroke="currentColor"
+            strokeWidth="2.8" strokeLinecap="round"
           >
-            <svg
-              width="22" height="22" viewBox="0 0 22 22"
-              fill="none" stroke="currentColor"
-              strokeWidth="2.8" strokeLinecap="round"
-            >
-              <line x1="4" y1="4" x2="18" y2="18" />
-              <line x1="18" y1="4" x2="4" y2="18" />
-            </svg>
-          </button>
+            <line x1="4" y1="4" x2="18" y2="18" />
+            <line x1="18" y1="4" x2="4" y2="18" />
+          </svg>
+        </button>
 
-          {/* Two pill segments — tap to toggle view */}
-          <div
-            className="flex-1 flex flex-col gap-[6px] items-end w-full cursor-pointer"
-            onClick={toggleView}
-          >
-            {[1, 0].map(idx => {
-              const segFill = Math.max(0, Math.min(1, progress * 2 - idx));
-              return (
+        {/* Two pill segments — same height as white cards */}
+        <div
+          className="absolute flex flex-col gap-[6px] items-end cursor-pointer"
+          style={{
+            top: CARDS_TOP,
+            bottom: MARGIN_V,
+            right: `calc(${SA_RIGHT} - 25px)`,
+            width: RAIL_W,
+          }}
+          onClick={toggleView}
+        >
+          {[1, 0].map(idx => {
+            const segFill = Math.max(0, Math.min(1, progress * 2 - idx));
+            return (
+              <div
+                key={idx}
+                className="flex-1 relative overflow-hidden"
+                style={{
+                  width: BAR_W,
+                  background: barTrack,
+                  borderRadius: BAR_W / 2,
+                }}
+              >
                 <div
-                  key={idx}
-                  className="flex-1 relative overflow-hidden"
+                  className="absolute top-0 left-0 right-0"
                   style={{
-                    width: BAR_W,
-                    background: barTrack,
-                    borderRadius: BAR_W / 2,
+                    height: `${segFill * 100}%`,
+                    background: barFill,
                   }}
-                >
-                  <div
-                    className="absolute top-0 left-0 right-0"
-                    style={{
-                      height: `${segFill * 100}%`,
-                      background: barFill,
-                    }}
-                  />
-                </div>
-              );
-            })}
-          </div>
+                />
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

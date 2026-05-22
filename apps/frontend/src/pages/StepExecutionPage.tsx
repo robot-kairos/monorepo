@@ -94,8 +94,8 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
   );
 }
 
-function RightRail({ color, onBack, onForward }: {
-  color: string; onBack: () => void; onForward: () => void;
+function RightRail({ color, onBack, onForward, showForward = true }: {
+  color: string; onBack: () => void; onForward: () => void; showForward?: boolean;
 }) {
   return (
     <>
@@ -106,17 +106,55 @@ function RightRail({ color, onBack, onForward }: {
       >
         ‹
       </button>
-      <button
-        onClick={onForward}
-        className="absolute flex items-center justify-center text-[34px] leading-none font-bold rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
-        style={{
-          right: -25, top: 80, bottom: 71.5, width: 60,
-          background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d',
-        }}
-      >
-        ›
-      </button>
+      {showForward && (
+        <button
+          onClick={onForward}
+          className="absolute flex items-center justify-center text-[34px] leading-none font-bold rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
+          style={{
+            right: -25, top: 80, bottom: 71.5, width: 60,
+            background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d',
+          }}
+        >
+          ›
+        </button>
+      )}
     </>
+  );
+}
+
+function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () => void }) {
+  return (
+    <div
+      className="absolute z-[2] flex flex-col items-end"
+      style={{
+        right: -25, top: 80, bottom: 71.5, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
+        paddingRight: 8, paddingTop: 10, paddingBottom: 10, gap: 16,
+        justifyContent: 'center',
+        background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+        borderRadius: 34,
+        border: '1px solid rgba(0,0,0,0.08)',
+      }}
+    >
+      <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
+        <span style={{ flex: 1, textAlign: 'center', fontSize: 22, fontWeight: 700, color: '#1e170d' }}>31°C</span>
+        <button
+          onClick={onConfirm}
+          className="rounded-full flex items-center justify-center border-none cursor-pointer"
+          style={{ width: 46, height: 46, background: '#84cc16', flexShrink: 0 }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </button>
+      </div>
+      <button
+        onClick={onSkip}
+        className="rounded-full flex items-center justify-center border-none cursor-pointer font-bold"
+        style={{ width: 46, height: 46, background: '#ccc9bb', color: '#111', fontSize: 13, flexShrink: 0 }}
+      >
+        Skip
+      </button>
+    </div>
   );
 }
 
@@ -265,7 +303,8 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
               >?</span>
             </button>
 
-            <RightRail color={step.color} onBack={goBack} onForward={goForward} />
+            <RightRail color={step.color} onBack={goBack} onForward={goForward} showForward={step.label !== 'DATA'} />
+            {step.label === 'DATA' && <DataOverlay onConfirm={goForward} onSkip={goForward} />}
           </div>
 
         </div>
