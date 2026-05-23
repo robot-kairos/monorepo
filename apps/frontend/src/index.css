@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* Step accent colours — sRGB fallbacks, overridden with native P3 on capable displays */
+:root {
+  --step-reach: #FFC541;
+  --step-data:  #FE8F40;
+  --step-qa:    #80DEDF;
+  --step-shot:  #AF9BFF;
+  --cp-orange: #f06018;
+  --cp-yellow: #f5b830;
+  --cp-peach:  #FFC07A;
+}
+
+@supports (color: color(display-p3 0 0 0)) {
+  @media (color-gamut: p3) {
+    :root {
+      --step-reach: color(display-p3 1     0.773 0.255);
+      --step-data:  color(display-p3 0.996 0.561 0.251);
+      --step-qa:    color(display-p3 0.502 0.871 0.875);
+      --step-shot:  color(display-p3 0.686 0.608 1.0  );
+      --cp-orange: color(display-p3 0.965 0.385 0.080);
+      --cp-yellow: color(display-p3 0.995 0.745 0.240);
+      --cp-peach:  color(display-p3 1.0   0.755 0.480);
+    }
+  }
+}
+
+.cp-pill-active { background-color: color-mix(in srgb, var(--cp-peach) 55%, transparent); }
+
 :root {
   --bg-0: oklch(0.14 0.012 250);
   --bg-1: oklch(0.18 0.012 250);

@@ -10,10 +10,10 @@ interface Props {
 }
 
 const STEPS = [
-  { id: 1, label: 'REACH', color: '#f6c340' },
-  { id: 2, label: 'DATA',  color: '#ff8f42' },
-  { id: 3, label: 'QA',    color: '#60afff' },
-  { id: 4, label: 'SHOT',  color: '#8b6cff' },
+  { id: 1, label: 'REACH', color: 'var(--step-reach)' },
+  { id: 2, label: 'DATA',  color: 'var(--step-data)'  },
+  { id: 3, label: 'QA',    color: 'var(--step-qa)'    },
+  { id: 4, label: 'SHOT',  color: 'var(--step-shot)'  },
 ];
 
 const FUTURE_TAB_BG   = '#e9e4cf';
@@ -25,11 +25,8 @@ function formatSpeed(kbs: number): string {
   return `${kbs} KB/s`;
 }
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function withAlpha(color: string, alpha: number): string {
+  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`;
 }
 
 function ProgressTabs({ stepIdx }: { stepIdx: number }) {
@@ -50,7 +47,7 @@ function ProgressTabs({ stepIdx }: { stepIdx: number }) {
               border: active ? '1.3px solid #1e170d' : `1.3px solid ${FUTURE_TAB_TEXT}`,
               borderRight: active ? '1.3px solid #000' : `1.3px solid ${FUTURE_TAB_TEXT}`,
               borderRadius: i === 0 && last ? 7 : i === 0 ? '7px 6px 6px 7px' : last ? '6px 7px 7px 6px' : 6,
-              background: active ? hexToRgba(step.color, OVERLAY_OPACITY) : hexToRgba(FUTURE_TAB_BG, OVERLAY_OPACITY),
+              background: active ? withAlpha(step.color, OVERLAY_OPACITY) : withAlpha(FUTURE_TAB_BG, OVERLAY_OPACITY),
               color: active ? '#1e170d' : FUTURE_TAB_TEXT,
               justifyContent: active && step.label !== 'REACH' ? 'flex-end' : 'center',
               boxShadow: active ? 'inset 0 0 0 1px rgba(255,255,255,0.18)' : undefined,
@@ -80,10 +77,10 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
         style={{
           width: 60, height: 60,
           border: '1px solid rgba(0,0,0,0.08)',
-          background: ptt ? hexToRgba('#d5d0bd', OVERLAY_OPACITY) : hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+          background: ptt ? withAlpha('#d5d0bd', OVERLAY_OPACITY) : withAlpha('#d9d4c1', OVERLAY_OPACITY),
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
+        <svg width="22" height="26" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
           <rect x="9" y="2" width="6" height="12" rx="3" />
           <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="#111" strokeWidth="2" />
           <line x1="12" y1="18" x2="12" y2="22" stroke="#111" strokeWidth="2" />
@@ -101,21 +98,25 @@ function RightRail({ color, onBack, onForward, showForward = true }: {
     <>
       <button
         onClick={onBack}
-        className="absolute flex items-center justify-center text-[30px] leading-none font-bold rounded-[34px] border-none cursor-pointer z-[1]"
-        style={{ right: -25, top: 15, width: 60, height: 48, background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d' }}
+        className="absolute flex items-center justify-center border-none cursor-pointer z-[1]"
+        style={{ right: -25, top: 15, width: 60, height: 60, borderRadius: 30, background: withAlpha(color, OVERLAY_OPACITY), border: '1px solid rgba(0,0,0,0.08)' }}
       >
-        ‹
+        <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
       </button>
       {showForward && (
         <button
           onClick={onForward}
-          className="absolute flex items-center justify-center text-[34px] leading-none font-bold rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
+          className="absolute flex items-center justify-center rounded-[34px] border-none shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] cursor-pointer z-[1]"
           style={{
-            right: -25, top: 80, bottom: 71.5, width: 60,
-            background: hexToRgba(color, OVERLAY_OPACITY), color: '#2c220d',
+            right: -25, top: 91, bottom: 71, width: 60,
+            background: withAlpha(color, OVERLAY_OPACITY),
           }}
         >
-          ›
+          <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
         </button>
       )}
     </>
@@ -127,10 +128,10 @@ function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () 
     <div
       className="absolute z-[2] flex flex-col items-end"
       style={{
-        right: -25, top: 63, bottom: 55, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
+        right: -25, top: 75, bottom: 55, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
         paddingRight: 8, paddingTop: 10, paddingBottom: 10, gap: 16,
         justifyContent: 'center',
-        background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+        background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
         borderRadius: 34,
         border: '1px solid rgba(0,0,0,0.08)',
       }}
@@ -173,9 +174,9 @@ function QAOverlay({ ptt: _ptt, onSkip }: { ptt: boolean; onSkip: () => void }) 
     <div
       className="absolute z-[2] flex items-center gap-4"
       style={{
-        top: 63, bottom: 55, right: -25,
+        top: 75, bottom: 55, right: -25,
         height: 44, marginTop: 'auto', marginBottom: 'auto',
-        background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+        background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
         borderRadius: 22,
         border: '1px solid rgba(0,0,0,0.10)',
         paddingLeft: 12, paddingRight: 0,
@@ -196,7 +197,7 @@ function QAOverlay({ ptt: _ptt, onSkip }: { ptt: boolean; onSkip: () => void }) 
         }}
       >
         {status === 'idle' && (
-          <div style={{ width: 31, height: 31, borderRadius: '50%', background: '#60afff' }} />
+          <div style={{ width: 31, height: 31, borderRadius: '50%', background: 'var(--step-qa)' }} />
         )}
         {status === 'listening' && (
           <div style={{ width: 18, height: 18, borderRadius: 4, background: '#e63946' }} />
@@ -208,18 +209,18 @@ function QAOverlay({ ptt: _ptt, onSkip }: { ptt: boolean; onSkip: () => void }) 
 
 function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
   const [phase, setPhase] = useState<'review' | 'capture'>('review');
-  const btnStyle = { width: 60, height: 40, borderRadius: 34, border: 'none', cursor: 'pointer', flexShrink: 0 } as const;
+  const btnStyle = { width: 60, height: 40, borderRadius: 34, border: '1px solid rgba(0,0,0,0.08)', cursor: 'pointer', flexShrink: 0 } as const;
 
   return (
     <div
       className="absolute z-[2] flex flex-col items-end justify-center"
-      style={{ right: -25, top: 63, bottom: 55 }}
+      style={{ right: -25, top: 75, bottom: 55 }}
     >
       {phase === 'capture' ? (
         <div className="flex flex-col items-center" style={{ width: 60, gap: 16 }}>
           <button
             className="flex items-center justify-center"
-            style={{ ...btnStyle, background: hexToRgba('#8b6cff', OVERLAY_OPACITY) }}
+            style={{ ...btnStyle, background: withAlpha('var(--step-shot)', OVERLAY_OPACITY) }}
           >
             <svg width="24" height="22" viewBox="0 0 24 22" fill="#111">
               <path d="M9 0L7 3H2C.9 3 0 3.9 0 5v14c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-5L15 0H9zm3 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
@@ -228,17 +229,19 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
 
           <button
             className="flex items-center justify-center font-bold"
-            style={{ ...btnStyle, background: hexToRgba('#e63946', OVERLAY_OPACITY), color: '#111', fontSize: 15 }}
+            style={{ ...btnStyle, background: withAlpha('#e63946', OVERLAY_OPACITY), color: '#111', fontSize: 15 }}
           >
             Skip
           </button>
 
           <button
             onClick={onConfirm}
-            className="flex items-center justify-center font-bold text-[28px] leading-none"
-            style={{ ...btnStyle, background: hexToRgba('#84cc16', OVERLAY_OPACITY), color: '#111' }}
+            className="flex items-center justify-center"
+            style={{ ...btnStyle, background: withAlpha('#84cc16', OVERLAY_OPACITY) }}
           >
-            ›
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
       ) : (
@@ -246,7 +249,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
           className="relative flex flex-col"
           style={{
             width: 370, height: 152,
-            background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+            background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
             borderRadius: 16,
             border: '1px solid rgba(0,0,0,0.08)',
             padding: 10, paddingBottom: 10, gap: 0,
@@ -260,7 +263,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
           <button
             onClick={() => setPhase('capture')}
             className="absolute flex items-center justify-center border-none cursor-pointer font-semibold"
-            style={{ right: 10, top: '50%', transform: 'translateY(-50%)', background: hexToRgba('#8b6cff', OVERLAY_OPACITY), color: '#111', fontSize: 14, width: 72, height: 50, borderRadius: 25, whiteSpace: 'nowrap' }}
+            style={{ right: 10, top: '50%', transform: 'translateY(-50%)', background: withAlpha('var(--step-shot)', OVERLAY_OPACITY), color: '#111', fontSize: 14, width: 72, height: 50, borderRadius: 25, whiteSpace: 'nowrap' }}
           >
             Got it!
           </button>
@@ -269,7 +272,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
               <button
                 className="rounded-full flex items-center justify-center border-none cursor-pointer"
-                style={{ width: 38, height: 38, background: hexToRgba('#e63946', OVERLAY_OPACITY) }}
+                style={{ width: 38, height: 38, background: withAlpha('#e63946', OVERLAY_OPACITY) }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" stroke="white" strokeWidth="3" strokeLinecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
@@ -279,7 +282,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
             <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
               <button
                 className="rounded-full flex items-center justify-center border-none cursor-pointer"
-                style={{ width: 38, height: 38, background: hexToRgba('#22c55e', OVERLAY_OPACITY) }}
+                style={{ width: 38, height: 38, background: withAlpha('#22c55e', OVERLAY_OPACITY) }}
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
@@ -407,7 +410,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
           >
             <div
               className="absolute flex items-center gap-3 min-w-0"
-              style={{ left: 0, top: 24.5, right: 50 }}
+              style={{ left: 0, top: 15, right: 50 }}
             >
               <ProgressTabs stepIdx={stepIdx} />
             </div>

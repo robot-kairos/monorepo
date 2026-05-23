@@ -9,11 +9,8 @@ interface Props {
 
 const OVERLAY_OPACITY = 0.6;
 
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+function withAlpha(color: string, alpha: number): string {
+  return `color-mix(in srgb, ${color} ${Math.round(alpha * 100)}%, transparent)`;
 }
 
 function formatSpeed(kbs: number): string {
@@ -29,7 +26,7 @@ function EvaluationTab() {
         style={{
           border: '1.3px solid #1e170d',
           borderRadius: 7,
-          background: hexToRgba('#ff8f42', OVERLAY_OPACITY),
+          background: withAlpha('var(--step-data)', OVERLAY_OPACITY),
           color: 'white',
           boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.18)',
           paddingLeft: 10, paddingRight: 10,
@@ -61,10 +58,10 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
         style={{
           width: 60, height: 60,
           border: '1px solid rgba(0,0,0,0.08)',
-          background: ptt ? hexToRgba('#d5d0bd', OVERLAY_OPACITY) : hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+          background: ptt ? withAlpha('#d5d0bd', OVERLAY_OPACITY) : withAlpha('#d9d4c1', OVERLAY_OPACITY),
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
+        <svg width="22" height="26" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
           <rect x="9" y="2" width="6" height="12" rx="3" />
           <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="#111" strokeWidth="2" />
           <line x1="12" y1="18" x2="12" y2="22" stroke="#111" strokeWidth="2" />
@@ -79,12 +76,12 @@ function CompleteButton({ onComplete }: { onComplete: () => void }) {
   return (
     <button
       onClick={onComplete}
-      className="absolute flex items-center justify-center rounded-[34px] border-none cursor-pointer z-[1]"
-      style={{ right: -25, top: 15, width: 60, height: 48, background: hexToRgba('#ff8f42', OVERLAY_OPACITY) }}
+      className="absolute flex items-center justify-center cursor-pointer z-[1]"
+      style={{ right: -25, top: 15, width: 60, height: 60, borderRadius: 30, background: withAlpha('var(--step-data)', OVERLAY_OPACITY), border: '1px solid rgba(0,0,0,0.08)' }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="2.2" strokeLinecap="round">
-        <path d="M12 3v6" />
-        <path d="M6.3 6.3a9 9 0 1 0 11.4 0" />
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="2.5" strokeLinecap="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+        <line x1="12" y1="2" x2="12" y2="12" />
       </svg>
     </button>
   );
@@ -184,7 +181,7 @@ export function EvaluationPage({ onComplete }: Props) {
           >
             <div
               className="absolute flex items-center gap-3 min-w-0"
-              style={{ left: 0, top: 24.5, right: 50 }}
+              style={{ left: 0, top: 15, right: 50 }}
             >
               <EvaluationTab />
             </div>
@@ -227,7 +224,7 @@ export function EvaluationPage({ onComplete }: Props) {
                 bottom: -5, left: '50%', transform: 'translateX(-50%)',
                 height: 74,
                 paddingLeft: 26, paddingRight: 28,
-                background: hexToRgba('#d9d4c1', OVERLAY_OPACITY),
+                background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
                 borderRadius: 18,
                 border: '1px solid rgba(0,0,0,0.08)',
                 whiteSpace: 'nowrap',
