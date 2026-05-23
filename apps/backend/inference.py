@@ -185,7 +185,7 @@ def calculate_urgency(detected_labels):
 
 def build_display_text(detected_labels, urgency):
     if len(detected_labels) == 0:
-        return ""
+        return "Person - P1"
 
     # Show only the strongest label for a clean UI
     top_label = max(
