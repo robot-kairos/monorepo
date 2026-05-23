@@ -48,14 +48,20 @@ LABEL_COLS = [
 ]
 
 CLASS_THRESHOLDS = {
-    "open_wound": 0.30,
-    "swelling": 0.35,
-    "trapped_limb": 0.50,
-    "unclear": 0.40,
-    "visible_blood": 0.35,
+    "open_wound": 0.75,
+    "swelling": 0.75,
+    "trapped_limb": 0.85,
+    "unclear": 0.80,
+    "visible_blood": 0.80,
 }
 
-
+DISPLAY_LABELS = {
+    "open_wound": "Open Wound",
+    "swelling": "Swelling Detected",
+    "trapped_limb": "Limb Trapped",
+    "unclear": "Unclear Condition",
+    "visible_blood": "Visible Blood",
+}
 # =====================================================
 # Load Models
 # =====================================================
@@ -181,16 +187,18 @@ def calculate_urgency(detected_labels):
 
 def build_display_text(detected_labels, urgency):
     if len(detected_labels) == 0:
-        return f"no_clear_injury | {urgency}"
+        return ""
 
-    label_parts = []
+    # Show only the strongest label for a clean UI
+    top_label = max(
+        detected_labels,
+        key=lambda item: item["confidence"]
+    )
 
-    for item in detected_labels:
-        label_parts.append(
-            f"{item['label']} {item['confidence']:.2f}"
-        )
+    internal_label = top_label["label"]
+    display_label = DISPLAY_LABELS.get(internal_label, internal_label)
 
-    return f"{', '.join(label_parts)} | {urgency}"
+    return f"{display_label} - {urgency}"
 
 
 def get_box_color(urgency):
@@ -230,12 +238,23 @@ def compute_detections(frame) -> list[_DrawCmd]:
                 continue
 
             detected_labels, _ = predict_injury_from_crop(crop)
-            urgency      = calculate_urgency(detected_labels)
-            display_text = build_display_text(detected_labels, urgency)
-            box_color    = get_box_color(urgency)
 
-            commands.append({'x1': x1, 'y1': y1, 'x2': x2, 'y2': y2,
-                             'color': box_color, 'text': display_text})
+            # Do not draw anything unless we are confident there is an injury-related label
+            if len(detected_labels) == 0:
+                continue
+
+            urgency = calculate_urgency(detected_labels)
+            display_text = build_display_text(detected_labels, urgency)
+            box_color = get_box_color(urgency)
+
+            commands.append({
+                "x1": x1,
+                "y1": y1,
+                "x2": x2,
+                "y2": y2,
+                "color": box_color,
+                "text": display_text,
+            })
     return commands
 
 
