@@ -59,7 +59,7 @@ DISPLAY_LABELS = {
     "open_wound": "Open Wound",
     "swelling": "Swelling Detected",
     "trapped_limb": "Limb Trapped",
-    "unclear": "Unclear Condition",
+    "unclear": "Person",
     "visible_blood": "Visible Blood",
 }
 # =====================================================
@@ -145,12 +145,10 @@ def predict_injury_from_crop(crop_bgr):
     # Keep unclear exclusive
     clear_labels = [
         label for label in predicted_labels
-        if label != "unclear"
     ]
 
     if len(clear_labels) > 0:
         predicted_labels = clear_labels
-        all_results["unclear"]["predicted"] = False
 
     detected_labels = [
         {
@@ -240,8 +238,8 @@ def compute_detections(frame) -> list[_DrawCmd]:
             detected_labels, _ = predict_injury_from_crop(crop)
 
             # Do not draw anything unless we are confident there is an injury-related label
-            if len(detected_labels) == 0:
-                continue
+            # if len(detected_labels) == 0:
+            #     continue
 
             urgency = calculate_urgency(detected_labels)
             display_text = build_display_text(detected_labels, urgency)
