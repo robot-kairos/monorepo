@@ -1,4 +1,4 @@
-"""Deep learning inference — YOLO person detection + ResNet18 injury classification + patch localization."""
+"""Deep learning inference — live YOLO person detection + ResNet18 injury classification + patch localization."""
 from __future__ import annotations
 
 import threading
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("uvicorn.error")
 
-_INFERENCE_FPS = 5
+_INFERENCE_FPS = 3
 MAX_STREAM_WIDTH = 640
 
 _DrawCmd = dict  # {x1, y1, x2, y2, color (BGR tuple), text}
@@ -33,7 +33,7 @@ YOLO_MODEL_PATH = "../../multi-label_classifier/yolov8n.pt"
 INJURY_MODEL_PATH = "../../multi-label_classifier/best_injury_multilabel_resnet18.pth"
 
 PERSON_CLASS_ID = 0
-PERSON_CONF_THRESHOLD = 0.5
+PERSON_CONF_THRESHOLD = 0.50
 
 MIN_W = 40
 MIN_H = 60
@@ -49,7 +49,7 @@ LABEL_COLS = [
     "visible_blood",
 ]
 
-# Used for full detected person crops
+# Full-person crop thresholds
 PERSON_CROP_THRESHOLDS = {
     "open_wound": 0.75,
     "swelling": 0.75,
@@ -58,8 +58,8 @@ PERSON_CROP_THRESHOLDS = {
     "visible_blood": 0.80,
 }
 
-# Used for patch scanning.
-# Keep stricter thresholds here because patches can create false positives.
+# Patch thresholds
+# These should be stricter because patch scanning can create false positives.
 PATCH_CONF_THRESHOLDS = {
     "open_wound": 0.72,
     "swelling": 0.88,
@@ -79,11 +79,12 @@ DISPLAY_LABELS = {
 ENABLE_PERSON_DETECTION = True
 ENABLE_PATCH_SCAN = True
 
-# Smaller windows localize injury better.
-WINDOW_SCALES = [0.20, 0.30, 0.40]
-WINDOW_STEP_RATIO = 0.35
+# Sliding-window localization
+# Smaller windows localize injuries better, but increase computation.
+WINDOW_SCALES = [0.25, 0.35]
+WINDOW_STEP_RATIO = 0.50
 
-# Reduce clutter in live feed.
+# Limit patch boxes for live feed clarity/performance.
 KEEP_ONLY_BEST_PATCH = True
 MAX_PATCH_RESULTS = 1
 
@@ -171,7 +172,7 @@ def predict_injury_from_crop_with_thresholds(crop_bgr, thresholds):
         if data["predicted"]
     ]
 
-    # If unclear is predicted, display it as Person - P1 only.
+    # If unclear is predicted, show it only as Person - P1.
     if "unclear" in predicted_labels:
         predicted_labels = ["unclear"]
 
@@ -201,7 +202,7 @@ def predict_patch_crop(crop_bgr):
 
 
 # =====================================================
-# Priority / display logic
+# Priority and display logic
 # =====================================================
 
 def calculate_urgency(detected_labels):
@@ -223,7 +224,6 @@ def build_display_text(detected_labels, urgency):
     if len(detected_labels) == 0:
         return "Person - P1"
 
-    # Prefer medically important labels over weaker labels.
     priority_order = {
         "trapped_limb": 5,
         "open_wound": 4,
@@ -259,37 +259,15 @@ def get_box_color(urgency):
 # Patch helpers
 # =====================================================
 
-def box_iou(box_a, box_b):
-    ax1, ay1, ax2, ay2 = box_a
-    bx1, by1, bx2, by2 = box_b
-
-    inter_x1 = max(ax1, bx1)
-    inter_y1 = max(ay1, by1)
-    inter_x2 = min(ax2, bx2)
-    inter_y2 = min(ay2, by2)
-
-    inter_w = max(0, inter_x2 - inter_x1)
-    inter_h = max(0, inter_y2 - inter_y1)
-
-    inter_area = inter_w * inter_h
-
-    area_a = max(0, ax2 - ax1) * max(0, ay2 - ay1)
-    area_b = max(0, bx2 - bx1) * max(0, by2 - by1)
-
-    union = area_a + area_b - inter_area
-
-    if union == 0:
-        return 0.0
-
-    return inter_area / union
-
-
 def generate_sliding_windows(frame_w, frame_h):
     windows = []
 
     for scale in WINDOW_SCALES:
         win_w = int(frame_w * scale)
         win_h = int(frame_h * scale)
+
+        if win_w < 64 or win_h < 64:
+            continue
 
         step_x = max(1, int(win_w * WINDOW_STEP_RATIO))
         step_y = max(1, int(win_h * WINDOW_STEP_RATIO))
@@ -331,24 +309,25 @@ def command_score(cmd):
 
 
 # =====================================================
-# Main inference
+# Main live inference
 # =====================================================
 
 def compute_detections(frame) -> list[_DrawCmd]:
     """
-    Hybrid inference:
-    1. Detect large visible persons and label them as Person - P1 or injury label.
-    2. Scan frame patches to localize partial-body / close-up injuries.
-    3. Avoid tiny background people.
+    Live hybrid inference:
+    1. Detect large full people using YOLO and label them.
+    2. Ignore tiny background people.
+    3. Scan patches to localize partial-body or close-up injuries.
+    4. Return draw commands for the MJPEG live stream.
     """
 
     frame_h, frame_w = frame.shape[:2]
-    commands: list[_DrawCmd] = []
-    person_boxes: list[list[int]] = []
+
+    person_commands: list[_DrawCmd] = []
     patch_commands: list[_DrawCmd] = []
 
     # =====================================================
-    # 1. Person detection path
+    # 1. Full-person path
     # =====================================================
 
     if ENABLE_PERSON_DETECTION:
@@ -384,11 +363,9 @@ def compute_detections(frame) -> list[_DrawCmd]:
 
                 area_ratio = (w * h) / max(1, frame_w * frame_h)
 
-                # Ignore tiny background people/posters/screens.
+                # Prevent tiny background people/posters from being labeled.
                 if area_ratio < MIN_PERSON_AREA_RATIO:
                     continue
-
-                person_boxes.append([x1, y1, x2, y2])
 
                 crop = frame[y1:y2, x1:x2]
 
@@ -401,7 +378,7 @@ def compute_detections(frame) -> list[_DrawCmd]:
                 display_text = build_display_text(detected_labels, urgency)
                 box_color = get_box_color(urgency)
 
-                commands.append({
+                person_commands.append({
                     "x1": x1,
                     "y1": y1,
                     "x2": x2,
@@ -413,15 +390,13 @@ def compute_detections(frame) -> list[_DrawCmd]:
                 })
 
     # =====================================================
-    # 2. Patch scan path for injury localization
+    # 2. Patch path for partial-body injuries
     # =====================================================
 
     if ENABLE_PATCH_SCAN:
         windows = generate_sliding_windows(frame_w, frame_h)
 
-        for patch_box in windows:
-            x1, y1, x2, y2 = patch_box
-
+        for x1, y1, x2, y2 in windows:
             patch = frame[y1:y2, x1:x2]
 
             if patch.size == 0:
@@ -429,11 +404,11 @@ def compute_detections(frame) -> list[_DrawCmd]:
 
             detected_labels, _ = predict_patch_crop(patch)
 
-            # Patch scan should only display actual injury-like findings.
-            # Do not show Person - P1 from patches.
+            # Patch mode should only show clear injury findings.
+            # Do not draw Person - P1 from patches.
             detected_labels = [
                 item for item in detected_labels
-                if item["label"] not in ["unclear"]
+                if item["label"] != "unclear"
             ]
 
             if len(detected_labels) == 0:
@@ -441,7 +416,7 @@ def compute_detections(frame) -> list[_DrawCmd]:
 
             urgency = calculate_urgency(detected_labels)
 
-            # Patch scan should not draw P1.
+            # Do not draw P1 patch findings.
             if urgency == "P1":
                 continue
 
@@ -467,9 +442,8 @@ def compute_detections(frame) -> list[_DrawCmd]:
             )
             patch_commands = patch_commands[:MAX_PATCH_RESULTS]
 
-        commands.extend(patch_commands)
-
-    return commands
+    # Person labels + best injury patch labels are both returned to live stream.
+    return person_commands + patch_commands
 
 
 # ---------------------------------------------------------------------------
