@@ -386,10 +386,6 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
     onBack();
   }
 
-  if (showManual) {
-    return <UserManualPage onClose={() => setShowManual(false)} />;
-  }
-
   return (
     <div className="fixed inset-0 bg-black overflow-hidden">
       <div className="relative w-full h-full bg-black select-none font-sans">
@@ -450,6 +446,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
 
         </div>
       </div>
+      {showManual && <UserManualPage onClose={() => setShowManual(false)} />}
     </div>
   );
 }

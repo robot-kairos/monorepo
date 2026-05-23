@@ -53,7 +53,7 @@ export function UserManualPage({ onClose, progress = 0.5 }: Props) {
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center overflow-hidden"
+      className="fixed inset-0 flex items-center justify-center overflow-hidden z-[10]"
       style={{ background: BG }}
     >
       <div
