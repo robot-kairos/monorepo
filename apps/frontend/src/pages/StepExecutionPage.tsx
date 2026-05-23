@@ -199,88 +199,71 @@ function QAOverlay({ ptt: _ptt, onSkip }: { ptt: boolean; onSkip: () => void }) 
   );
 }
 
-function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
-  const [phase, setPhase] = useState<'review' | 'capture'>('review');
+function ShotOverlay({ onConfirm, videoElRef, capturedImage, setCapturedImage }: {
+  onConfirm: () => void;
+  videoElRef: { current: HTMLVideoElement | null };
+  capturedImage: string | null;
+  setCapturedImage: (img: string) => void;
+}) {
   const btnStyle = { width: 60, height: 40, borderRadius: 34, border: '1px solid rgba(0,0,0,0.08)', cursor: 'pointer', flexShrink: 0 } as const;
+
+  function handleCapture() {
+    const videoEl = videoElRef.current;
+    if (!videoEl) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoEl.videoWidth || 640;
+    canvas.height = videoEl.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+    setCapturedImage(canvas.toDataURL('image/jpeg', 0.9));
+  }
 
   return (
     <div
-      className="absolute z-[2] flex flex-col items-end justify-center"
+      className="absolute z-[2] flex flex-row items-center justify-end gap-3"
       style={{ right: -25, top: 75, bottom: 55 }}
     >
-      {phase === 'capture' ? (
-        <div className="flex flex-col items-center" style={{ width: 60, gap: 16 }}>
-          <button
-            className="flex items-center justify-center"
-            style={{ ...btnStyle, background: withAlpha('var(--step-shot)', OVERLAY_OPACITY) }}
-          >
-            <CameraIcon className="w-6 h-6" style={{ color: '#111' }} />
-          </button>
-
-          <button
-            className="flex items-center justify-center font-bold"
-            style={{ ...btnStyle, background: withAlpha('#e63946', OVERLAY_OPACITY), color: '#111', fontSize: 15 }}
-          >
-            Skip
-          </button>
-
-          <button
-            onClick={onConfirm}
-            className="flex items-center justify-center"
-            style={{ ...btnStyle, background: withAlpha('#84cc16', OVERLAY_OPACITY) }}
-          >
-            <ChevronRightIcon className="w-6 h-6" style={{ color: '#111' }} strokeWidth={3.5} />
-          </button>
-        </div>
-      ) : (
+      {capturedImage && (
         <div
-          className="relative flex flex-col"
           style={{
-            width: 370, height: 152,
-            background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
-            borderRadius: 16,
+            width: 110, height: 96,
+            marginBottom: 56,
+            borderRadius: 14,
             border: '1px solid rgba(0,0,0,0.08)',
-            padding: 10, paddingBottom: 10, gap: 0,
+            overflow: 'hidden',
+            flexShrink: 0,
           }}
         >
-          <div className="flex flex-1 gap-3" style={{ paddingRight: 82 }}>
-            <div style={{ flex: 1, background: 'white', borderRadius: 10 }} />
-            <div style={{ flex: 1, background: 'white', borderRadius: 10 }} />
-          </div>
-
-          <button
-            onClick={() => setPhase('capture')}
-            className="absolute flex items-center justify-center border-none cursor-pointer font-semibold"
-            style={{ right: 10, top: '50%', transform: 'translateY(-50%)', background: withAlpha('var(--step-shot)', OVERLAY_OPACITY), color: '#111', fontSize: 14, width: 72, height: 50, borderRadius: 25, whiteSpace: 'nowrap' }}
-          >
-            Got it!
-          </button>
-
-          <div className="flex" style={{ marginTop: -19 }}>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-              <button
-                className="rounded-full flex items-center justify-center border-none cursor-pointer"
-                style={{ width: 38, height: 38, background: withAlpha('#e63946', OVERLAY_OPACITY) }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" stroke="white" strokeWidth="3" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
-              <button
-                className="rounded-full flex items-center justify-center border-none cursor-pointer"
-                style={{ width: 38, height: 38, background: withAlpha('#22c55e', OVERLAY_OPACITY) }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </button>
-            </div>
-            <div style={{ width: 80 }} />
-          </div>
+          <img src={capturedImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         </div>
       )}
+
+      <div className="flex flex-col items-center" style={{ width: 60, gap: 16 }}>
+        <button
+          onClick={handleCapture}
+          className="flex items-center justify-center"
+          style={{ ...btnStyle, background: withAlpha('var(--step-shot)', OVERLAY_OPACITY) }}
+        >
+          <CameraIcon className="w-6 h-6" style={{ color: '#111' }} />
+        </button>
+
+        <button
+          onClick={onConfirm}
+          className="flex items-center justify-center font-bold"
+          style={{ ...btnStyle, background: withAlpha('#e63946', OVERLAY_OPACITY), color: '#111', fontSize: 15 }}
+        >
+          Skip
+        </button>
+
+        <button
+          onClick={onConfirm}
+          className="flex items-center justify-center"
+          style={{ ...btnStyle, background: withAlpha('#84cc16', OVERLAY_OPACITY) }}
+        >
+          <ChevronRightIcon className="w-6 h-6" style={{ color: '#111' }} strokeWidth={3.5} />
+        </button>
+      </div>
     </div>
   );
 }
@@ -350,17 +333,18 @@ function CameraFeed({ setVideoEl, connected }: { setVideoEl: (el: HTMLVideoEleme
 }
 
 export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Props) {
-  const [stepIdx, setStepIdx]       = useState(0);
-  const [ptt, setPtt]               = useState(false);
-  const [showManual, setShowManual] = useState(false);
+  const [stepIdx, setStepIdx]           = useState(0);
+  const [ptt, setPtt]                   = useState(false);
+  const [showManual, setShowManual]     = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(true);
+  const [shotImage, setShotImage]       = useState<string | null>(null);
 
   useEffect(() => {
     onMounted?.();
     const t = setTimeout(() => setHelpExpanded(false), 10000);
     return () => clearTimeout(t);
   }, []);
-  const { setVideoEl, connected: rtcConnected, videoStats } = webrtc;
+  const { setVideoEl, videoElRef, connected: rtcConnected, videoStats } = webrtc;
 
   const step = STEPS[stepIdx]!;
 
@@ -429,7 +413,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Pro
             <RightRail color={step.color} onBack={goBack} onForward={goForward} showForward={step.label !== 'DATA' && step.label !== 'QA' && step.label !== 'SHOT'} />
             {step.label === 'DATA' && <DataOverlay onConfirm={goForward} onSkip={goForward} />}
             {step.label === 'QA' && <QAOverlay ptt={ptt} onSkip={goForward} />}
-            {step.label === 'SHOT' && <ShotOverlay onConfirm={onComplete} />}
+            {step.label === 'SHOT' && <ShotOverlay onConfirm={onComplete} videoElRef={videoElRef} capturedImage={shotImage} setCapturedImage={setShotImage} />}
           </div>
 
         </div>

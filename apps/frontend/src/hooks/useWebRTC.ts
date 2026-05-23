@@ -138,5 +138,5 @@ export function useWebRTC({ enabled = true }: { enabled?: boolean } = {}) {
     };
   }, [connect, enabled]);
 
-  return { setVideoEl, connected, videoStats };
+  return { setVideoEl, videoElRef, connected, videoStats };
 }
