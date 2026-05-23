@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ChevronRightIcon } from '@heroicons/react/24/outline';
+import { MicrophoneIcon } from '@heroicons/react/24/solid';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { VideoStats } from '../types';
 import { UserManualPage } from './UserManual';
@@ -62,12 +63,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
           background: ptt ? withAlpha('#d5d0bd', OVERLAY_OPACITY) : withAlpha('#d9d4c1', OVERLAY_OPACITY),
         }}
       >
-        <svg width="22" height="26" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
-          <rect x="9" y="2" width="6" height="12" rx="3" />
-          <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="#111" strokeWidth="2" />
-          <line x1="12" y1="18" x2="12" y2="22" stroke="#111" strokeWidth="2" />
-          <line x1="9" y1="22" x2="15" y2="22" stroke="#111" strokeWidth="2" />
-        </svg>
+        <MicrophoneIcon className="w-6 h-6" style={{ color: '#111' }} />
       </button>
     </div>
   );

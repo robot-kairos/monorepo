@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { CameraIcon, MicrophoneIcon } from '@heroicons/react/24/solid';
 import { VideoStats } from '../types';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { UserManualPage } from './UserManual';
@@ -81,12 +82,7 @@ function PttButton({ ptt, setPtt }: { ptt: boolean; setPtt: (v: boolean) => void
           background: ptt ? withAlpha('#d5d0bd', OVERLAY_OPACITY) : withAlpha('#d9d4c1', OVERLAY_OPACITY),
         }}
       >
-        <svg width="22" height="26" viewBox="0 0 24 24" fill="#111" stroke="#111" strokeWidth="0" strokeLinecap="round">
-          <rect x="9" y="2" width="6" height="12" rx="3" />
-          <path d="M5 11a7 7 0 0 0 14 0" fill="none" stroke="#111" strokeWidth="2" />
-          <line x1="12" y1="18" x2="12" y2="22" stroke="#111" strokeWidth="2" />
-          <line x1="9" y1="22" x2="15" y2="22" stroke="#111" strokeWidth="2" />
-        </svg>
+        <MicrophoneIcon className="w-6 h-6" style={{ color: '#111' }} />
       </button>
     </div>
   );
@@ -140,9 +136,7 @@ function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () 
           className="rounded-full flex items-center justify-center border-none cursor-pointer"
           style={{ width: 46, height: 46, background: '#84cc16', flexShrink: 0 }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+          <CheckIcon className="w-5 h-5" style={{ color: '#111' }} strokeWidth={3} />
         </button>
       </div>
       <button
@@ -219,9 +213,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
             className="flex items-center justify-center"
             style={{ ...btnStyle, background: withAlpha('var(--step-shot)', OVERLAY_OPACITY) }}
           >
-            <svg width="24" height="22" viewBox="0 0 24 22" fill="#111">
-              <path d="M9 0L7 3H2C.9 3 0 3.9 0 5v14c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-5L15 0H9zm3 16a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-8a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"/>
-            </svg>
+            <CameraIcon className="w-6 h-6" style={{ color: '#111' }} />
           </button>
 
           <button
