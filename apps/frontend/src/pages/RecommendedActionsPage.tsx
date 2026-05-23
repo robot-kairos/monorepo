@@ -23,7 +23,7 @@ interface Action {
   status: ActionStatus;
 }
 
-export function RecommendedActionsPage({ profile: _profile, onComplete: _onComplete }: Props) {
+export function RecommendedActionsPage({ profile: _profile, onComplete }: Props) {
   const [actions] = useState<Action[]>([
     { id: 1, status: 'rejected' },
     { id: 2, status: 'accepted' },
@@ -67,6 +67,23 @@ export function RecommendedActionsPage({ profile: _profile, onComplete: _onCompl
         style={{ left: 4, top: '50%', transform: 'translateY(-50%)', width: 5, height: 56 }}
       />
 
+      {/* Power / exit button — top right */}
+      <button
+        onClick={onComplete}
+        className="absolute flex items-center justify-center cursor-pointer z-20"
+        style={{
+          right: 14, top: 15,
+          width: 60, height: 60, borderRadius: 30,
+          background: 'rgba(239, 68, 68, 0.7)',
+          border: '1px solid rgba(0,0,0,0.08)',
+        }}
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+          <line x1="12" y1="2" x2="12" y2="12" />
+        </svg>
+      </button>
+
       {/* Title */}
       <h2
         className="font-bold relative z-10"
@@ -81,9 +98,9 @@ export function RecommendedActionsPage({ profile: _profile, onComplete: _onCompl
       {/* Cards — vertically centered in remaining space */}
       <div
         className="flex-1 flex flex-col justify-center relative z-10"
-        style={{ paddingLeft: 58, paddingRight: 28, paddingBottom: 28 }}
+        style={{ paddingLeft: 58, paddingRight: 14, paddingBottom: 28 }}
       >
-        <div className="flex" style={{ gap: 28, height: 200 }}>
+        <div className="flex" style={{ gap: 14, height: 200 }}>
           {actions.map(action => (
             <div
               key={action.id}

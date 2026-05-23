@@ -79,9 +79,8 @@ function CompleteButton({ onComplete }: { onComplete: () => void }) {
       className="absolute flex items-center justify-center cursor-pointer z-[1]"
       style={{ right: -25, top: 15, width: 60, height: 60, borderRadius: 30, background: withAlpha('var(--step-data)', OVERLAY_OPACITY), border: '1px solid rgba(0,0,0,0.08)' }}
     >
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="2.5" strokeLinecap="round">
-        <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-        <line x1="12" y1="2" x2="12" y2="12" />
+      <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 18 15 12 9 6" />
       </svg>
     </button>
   );
