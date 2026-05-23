@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 
 const SA_LEFT  = 'max(20px, env(safe-area-inset-left))';
 const SA_RIGHT = 'env(safe-area-inset-right, 0px)';
@@ -136,7 +137,7 @@ export function UserManualPage({ onClose, progress = 0.5 }: Props) {
           onClick={onClose}
           className="absolute flex items-center justify-center rounded-full border-none cursor-pointer"
           style={{
-            top: 15,
+            top: MARGIN_V,
             right: `calc(${SA_RIGHT} - 25px)`,
             width: RAIL_W,
             height: RAIL_W,
@@ -144,14 +145,7 @@ export function UserManualPage({ onClose, progress = 0.5 }: Props) {
             color: '#fff',
           }}
         >
-          <svg
-            width="22" height="22" viewBox="0 0 22 22"
-            fill="none" stroke="currentColor"
-            strokeWidth="2.8" strokeLinecap="round"
-          >
-            <line x1="4" y1="4" x2="18" y2="18" />
-            <line x1="18" y1="4" x2="4" y2="18" />
-          </svg>
+          <XMarkIcon width={28} height={28} style={{ strokeWidth: 2.4 }} />
         </button>
 
         {/* Two pill segments — same height as white cards */}
