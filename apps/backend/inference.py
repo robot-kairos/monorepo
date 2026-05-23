@@ -1,4 +1,5 @@
 """Deep learning inference — live YOLO person detection + ResNet18 injury classification + patch localization."""
+
 from __future__ import annotations
 
 import threading
@@ -19,10 +20,17 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger("uvicorn.error")
 
-_INFERENCE_FPS = 3
+# =====================================================
+# Live performance settings
+# =====================================================
+
+_INFERENCE_FPS = 10
 MAX_STREAM_WIDTH = 640
 
-_DrawCmd = dict  # {x1, y1, x2, y2, color (BGR tuple), text}
+# Patch scan is expensive, so we do not run it every cycle.
+PATCH_EVERY_N_CYCLES = 3
+
+_DrawCmd = dict  # {x1, y1, x2, y2, color, text}
 
 
 # =====================================================
@@ -38,7 +46,7 @@ PERSON_CONF_THRESHOLD = 0.50
 MIN_W = 40
 MIN_H = 60
 
-# Ignore tiny background people, posters, reflections, screen images, etc.
+# Ignore tiny background people/posters/reflections/screens.
 MIN_PERSON_AREA_RATIO = 0.08
 
 LABEL_COLS = [
@@ -49,7 +57,7 @@ LABEL_COLS = [
     "visible_blood",
 ]
 
-# Full-person crop thresholds
+# Thresholds for full-person crops.
 PERSON_CROP_THRESHOLDS = {
     "open_wound": 0.75,
     "swelling": 0.75,
@@ -58,8 +66,8 @@ PERSON_CROP_THRESHOLDS = {
     "visible_blood": 0.80,
 }
 
-# Patch thresholds
-# These should be stricter because patch scanning can create false positives.
+# Thresholds for patch scanning.
+# Keep these stricter because patch scanning can create false positives.
 PATCH_CONF_THRESHOLDS = {
     "open_wound": 0.72,
     "swelling": 0.88,
@@ -79,29 +87,42 @@ DISPLAY_LABELS = {
 ENABLE_PERSON_DETECTION = True
 ENABLE_PATCH_SCAN = True
 
-# Sliding-window localization
-# Smaller windows localize injuries better, but increase computation.
-WINDOW_SCALES = [0.25, 0.35]
-WINDOW_STEP_RATIO = 0.50
+# Fewer windows = faster live feed.
+# Add 0.25 if you have a strong GPU.
+WINDOW_SCALES = [0.35]
+WINDOW_STEP_RATIO = 0.75
 
-# Limit patch boxes for live feed clarity/performance.
 KEEP_ONLY_BEST_PATCH = True
 MAX_PATCH_RESULTS = 1
 
 
 # =====================================================
-# Load Models
+# Device selection: GPU if available, otherwise CPU
 # =====================================================
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
+    yolo_device = 0  # Ultralytics prefers GPU index for CUDA
+    logger.info("CUDA GPU detected: using GPU acceleration.")
+    logger.info("GPU name: %s", torch.cuda.get_device_name(0))
+
 elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
     device = torch.device("mps")
+    yolo_device = "mps"
+    logger.info("Apple MPS detected: using MPS acceleration.")
+
 else:
     device = torch.device("cpu")
-    logger.warning("No GPU/MPS found: running inference on CPU, expect reduced performance")
+    yolo_device = "cpu"
+    logger.warning("No GPU/MPS found: running inference on CPU. Expect reduced performance.")
 
-logger.info("Torch inference will use %s device", device)
+logger.info("Torch device: %s", device)
+logger.info("YOLO device: %s", yolo_device)
+
+
+# =====================================================
+# Load Models
+# =====================================================
 
 try:
     person_model = YOLO(YOLO_MODEL_PATH)
@@ -111,6 +132,7 @@ except Exception as exc:
 
 try:
     injury_model = models.resnet18(weights=None)
+
     in_features = injury_model.fc.in_features
     injury_model.fc = nn.Linear(in_features, len(LABEL_COLS))
 
@@ -154,7 +176,7 @@ def predict_injury_from_crop_with_thresholds(crop_bgr, thresholds):
 
     with torch.no_grad():
         outputs = injury_model(input_tensor)
-        probabilities = torch.sigmoid(outputs).cpu().numpy()[0]
+        probabilities = torch.sigmoid(outputs).detach().cpu().numpy()[0]
 
     all_results = {}
 
@@ -172,7 +194,7 @@ def predict_injury_from_crop_with_thresholds(crop_bgr, thresholds):
         if data["predicted"]
     ]
 
-    # If unclear is predicted, show it only as Person - P1.
+    # If unclear is predicted, show only Person - P1.
     if "unclear" in predicted_labels:
         predicted_labels = ["unclear"]
 
@@ -256,7 +278,7 @@ def get_box_color(urgency):
 
 
 # =====================================================
-# Patch helpers
+# Sliding-window patch helpers
 # =====================================================
 
 def generate_sliding_windows(frame_w, frame_h):
@@ -266,7 +288,7 @@ def generate_sliding_windows(frame_w, frame_h):
         win_w = int(frame_w * scale)
         win_h = int(frame_h * scale)
 
-        if win_w < 64 or win_h < 64:
+        if win_w < 80 or win_h < 80:
             continue
 
         step_x = max(1, int(win_w * WINDOW_STEP_RATIO))
@@ -312,13 +334,13 @@ def command_score(cmd):
 # Main live inference
 # =====================================================
 
-def compute_detections(frame) -> list[_DrawCmd]:
+def compute_detections(frame, run_patch_scan: bool = True) -> list[_DrawCmd]:
     """
     Live hybrid inference:
     1. Detect large full people using YOLO and label them.
     2. Ignore tiny background people.
-    3. Scan patches to localize partial-body or close-up injuries.
-    4. Return draw commands for the MJPEG live stream.
+    3. Scan patches periodically to localize partial-body injuries.
+    4. Return draw commands for the live MJPEG stream.
     """
 
     frame_h, frame_w = frame.shape[:2]
@@ -327,7 +349,7 @@ def compute_detections(frame) -> list[_DrawCmd]:
     patch_commands: list[_DrawCmd] = []
 
     # =====================================================
-    # 1. Full-person path
+    # 1. Person detection path
     # =====================================================
 
     if ENABLE_PERSON_DETECTION:
@@ -335,7 +357,7 @@ def compute_detections(frame) -> list[_DrawCmd]:
             frame,
             conf=PERSON_CONF_THRESHOLD,
             verbose=False,
-            device=device,
+            device=yolo_device,
         )
 
         for result in results:
@@ -363,7 +385,7 @@ def compute_detections(frame) -> list[_DrawCmd]:
 
                 area_ratio = (w * h) / max(1, frame_w * frame_h)
 
-                # Prevent tiny background people/posters from being labeled.
+                # Ignore tiny background people/posters/screens.
                 if area_ratio < MIN_PERSON_AREA_RATIO:
                     continue
 
@@ -390,10 +412,10 @@ def compute_detections(frame) -> list[_DrawCmd]:
                 })
 
     # =====================================================
-    # 2. Patch path for partial-body injuries
+    # 2. Patch scan path
     # =====================================================
 
-    if ENABLE_PATCH_SCAN:
+    if ENABLE_PATCH_SCAN and run_patch_scan:
         windows = generate_sliding_windows(frame_w, frame_h)
 
         for x1, y1, x2, y2 in windows:
@@ -442,21 +464,21 @@ def compute_detections(frame) -> list[_DrawCmd]:
             )
             patch_commands = patch_commands[:MAX_PATCH_RESULTS]
 
-    # Person labels + best injury patch labels are both returned to live stream.
     return person_commands + patch_commands
 
 
 # ---------------------------------------------------------------------------
-# Inference worker — runs compute_detections in a dedicated thread so the
-# async generator never blocks on ML inference.
+# Inference worker
 # ---------------------------------------------------------------------------
 
 class InferenceWorker:
     def __init__(self, camera: "CameraCapture") -> None:
         self._camera = camera
         self._commands: list[_DrawCmd] = []
+        self._last_patch_commands: list[_DrawCmd] = []
         self._lock = threading.Lock()
         self._running = False
+        self._cycle = 0
 
     def start(self) -> None:
         self._running = True
@@ -474,7 +496,7 @@ class InferenceWorker:
             frame = self._camera.raw_frame()
 
             if frame is None:
-                time.sleep(0.033)
+                time.sleep(0.01)
                 continue
 
             h, w = frame.shape[:2]
@@ -487,10 +509,35 @@ class InferenceWorker:
                     interpolation=cv2.INTER_AREA,
                 )
 
-            cmds = compute_detections(frame)
+            run_patch_scan = (self._cycle % PATCH_EVERY_N_CYCLES == 0)
+
+            cmds = compute_detections(
+                frame,
+                run_patch_scan=run_patch_scan,
+            )
+
+            # Keep previous patch command between patch cycles, so labels do not disappear.
+            person_cmds = [
+                cmd for cmd in cmds
+                if cmd.get("source") == "person_detection"
+            ]
+
+            patch_cmds = [
+                cmd for cmd in cmds
+                if cmd.get("source") == "patch_scan"
+            ]
+
+            if run_patch_scan:
+                self._last_patch_commands = patch_cmds
+            else:
+                patch_cmds = self._last_patch_commands
+
+            final_cmds = person_cmds + patch_cmds
 
             with self._lock:
-                self._commands = cmds
+                self._commands = final_cmds
+
+            self._cycle += 1
 
             remaining = interval - (time.monotonic() - t0)
 
