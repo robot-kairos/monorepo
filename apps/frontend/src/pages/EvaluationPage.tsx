@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronRightIcon } from '@heroicons/react/24/outline';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { VideoStats } from '../types';
 import { UserManualPage } from './UserManual';
@@ -79,9 +80,7 @@ function CompleteButton({ onComplete }: { onComplete: () => void }) {
       className="absolute flex items-center justify-center cursor-pointer z-[1]"
       style={{ right: -25, top: 15, width: 60, height: 60, borderRadius: 30, background: withAlpha('var(--step-data)', OVERLAY_OPACITY), border: '1px solid rgba(0,0,0,0.08)' }}
     >
-      <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="9 18 15 12 9 6" />
-      </svg>
+      <ChevronRightIcon className="w-8 h-8" style={{ color: '#2c220d' }} strokeWidth={3} />
     </button>
   );
 }

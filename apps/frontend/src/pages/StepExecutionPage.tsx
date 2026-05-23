@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { VideoStats } from '../types';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { UserManualPage } from './UserManual';
@@ -101,9 +102,7 @@ function RightRail({ color, onBack, onForward, showForward = true }: {
         className="absolute flex items-center justify-center border-none cursor-pointer z-[1]"
         style={{ right: -25, top: 15, width: 60, height: 60, borderRadius: 30, background: withAlpha(color, OVERLAY_OPACITY), border: '1px solid rgba(0,0,0,0.08)' }}
       >
-        <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
+        <ChevronLeftIcon className="w-8 h-8" style={{ color: '#2c220d' }} strokeWidth={3} />
       </button>
       {showForward && (
         <button
@@ -114,9 +113,7 @@ function RightRail({ color, onBack, onForward, showForward = true }: {
             background: withAlpha(color, OVERLAY_OPACITY),
           }}
         >
-          <svg width="30" height="36" viewBox="0 0 24 24" fill="none" stroke="#2c220d" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
+          <ChevronRightIcon className="w-8 h-8" style={{ color: '#2c220d' }} strokeWidth={3} />
         </button>
       )}
     </>
@@ -239,9 +236,7 @@ function ShotOverlay({ onConfirm }: { onConfirm: () => void }) {
             className="flex items-center justify-center"
             style={{ ...btnStyle, background: withAlpha('#84cc16', OVERLAY_OPACITY) }}
           >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <ChevronRightIcon className="w-6 h-6" style={{ color: '#111' }} strokeWidth={3.5} />
           </button>
         </div>
       ) : (
