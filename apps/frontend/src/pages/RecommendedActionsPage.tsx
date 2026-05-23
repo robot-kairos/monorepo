@@ -89,7 +89,7 @@ export function RecommendedActionsPage({ profile: _profile, onComplete }: Props)
         className="font-bold relative z-10"
         style={{
           fontSize: 36, color: '#1a1200', letterSpacing: '-0.01em',
-          paddingTop: 42, paddingBottom: 0, paddingLeft: 58,
+          paddingTop: 34, paddingBottom: 0, paddingLeft: 58,
         }}
       >
         Recommended Actions
@@ -97,10 +97,10 @@ export function RecommendedActionsPage({ profile: _profile, onComplete }: Props)
 
       {/* Cards — vertically centered in remaining space */}
       <div
-        className="flex-1 flex flex-col justify-center relative z-10"
-        style={{ paddingLeft: 58, paddingRight: 14, paddingBottom: 28 }}
+        className="flex-1 flex flex-col justify-start relative z-10"
+        style={{ paddingLeft: 58, paddingRight: 14, paddingTop: 15, paddingBottom: 20 }}
       >
-        <div className="flex" style={{ gap: 14, height: 200 }}>
+        <div className="flex" style={{ gap: 14, height: 235 }}>
           {actions.map(action => (
             <div
               key={action.id}
