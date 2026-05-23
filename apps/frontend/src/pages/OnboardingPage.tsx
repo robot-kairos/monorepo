@@ -55,13 +55,8 @@ export function OnboardingPage({ onStart }: Props) {
   return (
     <div className="fixed inset-0 overflow-hidden bg-[#f1efe3] flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
       {/* Logo */}
-      <div className="pt-10 pb-10 text-center shrink-0">
-        <h1 className="font-display font-semibold text-[76px] text-[#ef7519] m-0 leading-none">
-          Kairos
-        </h1>
-        <p className="font-sans text-[20px] text-[#ef7519] mt-2 mb-0">
-          save resources, save lives
-        </p>
+      <div className="pt-10 pb-10 flex justify-center shrink-0">
+        <img src="/logo/logo_with_slogan.svg" alt="Kairos — save resources, save lives" className="w-[222px]" />
       </div>
 
       {/* Folder stack + hero */}
