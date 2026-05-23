@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { PowerIcon } from '@heroicons/react/24/outline';
 import { SurvivorProfile } from '../types';
 
 const imgTexture = '/tutorial/texture.png';
@@ -78,10 +79,7 @@ export function RecommendedActionsPage({ profile: _profile, onComplete }: Props)
           border: '1px solid rgba(0,0,0,0.08)',
         }}
       >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-          <line x1="12" y1="2" x2="12" y2="12" />
-        </svg>
+        <PowerIcon className="w-7 h-7 text-white" strokeWidth={2.5} />
       </button>
 
       {/* Title */}
