@@ -5,6 +5,7 @@ import { StepExecutionPage } from './pages/StepExecutionPage';
 import { CreateProfilePage } from './pages/CreateProfilePage';
 import { RecommendedActionsPage } from './pages/RecommendedActionsPage';
 import { EvaluationPage } from './pages/EvaluationPage';
+import { useWebRTC } from './hooks/useWebRTC';
 import { SurvivorProfile } from './types';
 
 type Screen = 'onboarding' | 'tutorial' | 'execution' | 'create-profile' | 'evaluation' | 'recommended-actions';
@@ -82,6 +83,9 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('onboarding');
   const [profile, setProfile] = useState<SurvivorProfile | null>(null);
 
+  // Pre-establish the WebRTC connection during onboarding so it's ready by execution time
+  const webrtc = useWebRTC();
+
   return (
     <>
       {screen === 'onboarding' && (
@@ -96,7 +100,7 @@ export default function App() {
       )}
       {screen === 'execution' && (
         <WithOrientation mode="landscape">
-          <StepExecutionPage onComplete={() => setScreen('create-profile')} onBack={() => setScreen('tutorial')} onMounted={preloadCreateProfile} />
+          <StepExecutionPage webrtc={webrtc} onComplete={() => setScreen('create-profile')} onBack={() => setScreen('tutorial')} onMounted={preloadCreateProfile} />
         </WithOrientation>
       )}
       {screen === 'create-profile' && (
@@ -106,7 +110,7 @@ export default function App() {
       )}
       {screen === 'evaluation' && (
         <WithOrientation mode="landscape">
-          <EvaluationPage onComplete={() => setScreen('recommended-actions')} />
+          <EvaluationPage webrtc={webrtc} onComplete={() => setScreen('recommended-actions')} />
         </WithOrientation>
       )}
       {screen === 'recommended-actions' && profile && (

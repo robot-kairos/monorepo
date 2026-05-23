@@ -9,6 +9,7 @@ interface Props {
   onComplete: () => void;
   onBack: () => void;
   onMounted?: () => void;
+  webrtc: ReturnType<typeof useWebRTC>;
 }
 
 const STEPS = [
@@ -325,11 +326,11 @@ function StreamStatsOverlay({ stats, connected }: { stats: VideoStats | null; co
   );
 }
 
-function CameraFeed({ videoRef, connected }: { videoRef: React.RefObject<HTMLVideoElement>; connected: boolean }) {
+function CameraFeed({ setVideoEl, connected }: { setVideoEl: (el: HTMLVideoElement | null) => void; connected: boolean }) {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: '#111' }}>
       <video
-        ref={videoRef}
+        ref={setVideoEl}
         autoPlay
         playsInline
         muted
@@ -348,7 +349,7 @@ function CameraFeed({ videoRef, connected }: { videoRef: React.RefObject<HTMLVid
   );
 }
 
-export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
+export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Props) {
   const [stepIdx, setStepIdx]       = useState(0);
   const [ptt, setPtt]               = useState(false);
   const [showManual, setShowManual] = useState(false);
@@ -359,7 +360,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
     const t = setTimeout(() => setHelpExpanded(false), 10000);
     return () => clearTimeout(t);
   }, []);
-  const { videoRef, connected: rtcConnected, videoStats } = useWebRTC();
+  const { setVideoEl, connected: rtcConnected, videoStats } = webrtc;
 
   const step = STEPS[stepIdx]!;
 
@@ -379,7 +380,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted }: Props) {
         <div className="relative w-full h-full overflow-hidden">
 
           <div className="absolute inset-0 z-0">
-            <CameraFeed videoRef={videoRef} connected={rtcConnected} />
+            <CameraFeed setVideoEl={setVideoEl} connected={rtcConnected} />
           </div>
 
           <div

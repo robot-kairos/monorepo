@@ -7,6 +7,7 @@ import { UserManualPage } from './UserManual';
 
 interface Props {
   onComplete: () => void;
+  webrtc: ReturnType<typeof useWebRTC>;
 }
 
 const OVERLAY_OPACITY = 0.6;
@@ -122,11 +123,11 @@ function StreamStatsOverlay({ stats, connected }: { stats: VideoStats | null; co
   );
 }
 
-function CameraFeed({ videoRef, connected }: { videoRef: React.RefObject<HTMLVideoElement>; connected: boolean }) {
+function CameraFeed({ setVideoEl, connected }: { setVideoEl: (el: HTMLVideoElement | null) => void; connected: boolean }) {
   return (
     <div className="relative w-full h-full overflow-hidden" style={{ background: '#111' }}>
       <video
-        ref={videoRef}
+        ref={setVideoEl}
         autoPlay
         playsInline
         muted
@@ -145,11 +146,11 @@ function CameraFeed({ videoRef, connected }: { videoRef: React.RefObject<HTMLVid
   );
 }
 
-export function EvaluationPage({ onComplete }: Props) {
+export function EvaluationPage({ onComplete, webrtc }: Props) {
   const [ptt, setPtt] = useState(false);
   const [showManual, setShowManual] = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(false);
-  const { videoRef, connected: rtcConnected, videoStats } = useWebRTC();
+  const { setVideoEl, connected: rtcConnected, videoStats } = webrtc;
 
   if (showManual) {
     return <UserManualPage onClose={() => setShowManual(false)} />;
@@ -161,7 +162,7 @@ export function EvaluationPage({ onComplete }: Props) {
         <div className="relative w-full h-full overflow-hidden">
 
           <div className="absolute inset-0 z-0">
-            <CameraFeed videoRef={videoRef} connected={rtcConnected} />
+            <CameraFeed setVideoEl={setVideoEl} connected={rtcConnected} />
           </div>
 
           <div

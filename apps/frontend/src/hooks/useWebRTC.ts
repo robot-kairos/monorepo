@@ -3,12 +3,14 @@ import { VideoStats } from '../types';
 
 const ICE_TIMEOUT_MS = 6000;
 
-export function useWebRTC() {
-  const videoRef = useRef<HTMLVideoElement>(null);
+export function useWebRTC({ enabled = true }: { enabled?: boolean } = {}) {
+  const videoElRef = useRef<HTMLVideoElement | null>(null);
+  const pendingStreamRef = useRef<MediaStream | null>(null);
   const [connected, setConnected] = useState(false);
   const [videoStats, setVideoStats] = useState<VideoStats | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const mountedRef = useRef(true);
+  const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const prevBytesRef = useRef<number>(0);
   // Tracks cumulative inbound-rtp fields needed for per-interval deltas
   const prevRtpRef = useRef({ jbd: 0, jbc: 0, tdt: 0, fd: 0 });
@@ -25,7 +27,8 @@ export function useWebRTC() {
     pc.ontrack = (event) => {
       if (!mountedRef.current) return;
       const [stream] = event.streams;
-      if (videoRef.current && stream) videoRef.current.srcObject = stream;
+      pendingStreamRef.current = stream;
+      if (videoElRef.current && stream) videoElRef.current.srcObject = stream;
     };
 
     pc.onconnectionstatechange = () => {
@@ -78,6 +81,7 @@ export function useWebRTC() {
 
       if (mountedRef.current) setVideoStats({ fps, kbps, total_frames, total_kb: Math.round(bytes / 1024), latency_ms });
     }, 1000);
+    statsIntervalRef.current = statsInterval;
 
     pc.addTransceiver('video', { direction: 'recvonly' });
     const offer = await pc.createOffer();
@@ -92,7 +96,7 @@ export function useWebRTC() {
       };
     });
 
-    if (!mountedRef.current) { pc.close(); return; }
+    if (!mountedRef.current) { pc.close(); clearInterval(statsInterval); return; }
 
     try {
       const res = await fetch('/webrtc/offer', {
@@ -102,7 +106,7 @@ export function useWebRTC() {
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const answer = await res.json();
-      if (!mountedRef.current) { pc.close(); return; }
+      if (!mountedRef.current) { pc.close(); clearInterval(statsInterval); return; }
       await pc.setRemoteDescription(new RTCSessionDescription(answer));
     } catch (err) {
       console.error('[useWebRTC] offer failed:', err);
@@ -112,15 +116,27 @@ export function useWebRTC() {
     }
   }, []);
 
+  // Callback ref: attaches buffered stream when the <video> element mounts
+  const setVideoEl = useCallback((el: HTMLVideoElement | null) => {
+    videoElRef.current = el;
+    if (el && pendingStreamRef.current) {
+      el.srcObject = pendingStreamRef.current;
+    }
+  }, []);
+
   useEffect(() => {
+    if (!enabled) return;
+
     mountedRef.current = true;
     connect();
+
     return () => {
       mountedRef.current = false;
+      if (statsIntervalRef.current) clearInterval(statsIntervalRef.current);
       pcRef.current?.close();
       pcRef.current = null;
     };
-  }, [connect]);
+  }, [connect, enabled]);
 
-  return { videoRef, connected, videoStats };
+  return { setVideoEl, connected, videoStats };
 }
