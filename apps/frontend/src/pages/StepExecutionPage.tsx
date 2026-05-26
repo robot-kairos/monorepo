@@ -1,9 +1,12 @@
+import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
 import { CheckIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { CameraIcon, MicrophoneIcon } from '@heroicons/react/24/solid';
-import { VideoStats } from '../types';
+import { RobotState, VideoStats } from '../types';
 import { useWebRTC } from '../hooks/useWebRTC';
+import { useRobotWS } from '../hooks/useRobotWS';
 import { UserManualPage } from './UserManual';
+import { DistanceStatusPill } from '../components/DistanceStatusPill';
 
 interface Props {
   onComplete: () => void;
@@ -117,21 +120,47 @@ function RightRail({ color, onBack, onForward, showForward = true }: {
   );
 }
 
-function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () => void }) {
+function DataOverlay({ onConfirm, onSkip, robotState }: {
+  onConfirm: () => void;
+  onSkip: () => void;
+  robotState: RobotState;
+}) {
+  const { temperature, vitals, online } = robotState;
+  const fmt = (v: number, decimals: number, unit: string) =>
+    online ? `${v.toFixed(decimals)}${unit}` : '—';
+
+  const rows = [
+    { label: 'TEMP', value: fmt(temperature.object, 1, ' °C') },
+    { label: 'HR',   value: fmt(vitals.hr,          0, ' bpm') },
+    { label: 'BR',   value: fmt(vitals.br,          0, ' rpm') },
+  ];
+
   return (
     <div
-      className="absolute z-[2] flex flex-col items-end"
+      className="absolute z-[2] flex flex-col"
       style={{
-        right: -25, top: 75, bottom: 55, width: 160, height: 152, marginTop: 'auto', marginBottom: 'auto',
-        paddingRight: 8, paddingTop: 10, paddingBottom: 10, gap: 16,
-        justifyContent: 'center',
+        right: -25, top: 75, bottom: 55, width: 176,
+        marginTop: 'auto', marginBottom: 'auto', height: 'fit-content',
+        paddingLeft: 16, paddingRight: 8, paddingTop: 12, paddingBottom: 10, gap: 6,
         background: withAlpha('#d9d4c1', OVERLAY_OPACITY),
         borderRadius: 34,
         border: '1px solid rgba(0,0,0,0.08)',
       }}
     >
-      <div style={{ display: 'flex', width: '100%', alignItems: 'center' }}>
-        <span style={{ flex: 1, textAlign: 'center', fontSize: 22, fontWeight: 700, color: '#1e170d' }}>31°C</span>
+      {rows.map(({ label, value }) => (
+        <div key={label} style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: '#1e170d', opacity: 0.45, letterSpacing: '0.07em', width: 32 }}>{label}</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: '#1e170d', flex: 1, textAlign: 'right' }}>{value}</span>
+        </div>
+      ))}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 6, marginTop: 6 }}>
+        <button
+          onClick={onSkip}
+          className="rounded-full flex items-center justify-center border-none cursor-pointer font-bold"
+          style={{ width: 46, height: 46, background: '#ccc9bb', color: '#111', fontSize: 13, flexShrink: 0 }}
+        >
+          Skip
+        </button>
         <button
           onClick={onConfirm}
           className="rounded-full flex items-center justify-center border-none cursor-pointer"
@@ -140,13 +169,6 @@ function DataOverlay({ onConfirm, onSkip }: { onConfirm: () => void; onSkip: () 
           <CheckIcon className="w-5 h-5" style={{ color: '#111' }} strokeWidth={3} />
         </button>
       </div>
-      <button
-        onClick={onSkip}
-        className="rounded-full flex items-center justify-center border-none cursor-pointer font-bold"
-        style={{ width: 46, height: 46, background: '#ccc9bb', color: '#111', fontSize: 13, flexShrink: 0 }}
-      >
-        Skip
-      </button>
     </div>
   );
 }
@@ -268,13 +290,11 @@ function ShotOverlay({ onConfirm, videoElRef, capturedImage, setCapturedImage }:
   );
 }
 
-function StreamStatsOverlay({ stats, connected }: { stats: VideoStats | null; connected: boolean }) {
+function StreamStatsOverlay({ stats, connected, style }: { stats: VideoStats | null; connected: boolean; style: CSSProperties }) {
   return (
     <div
       className="absolute z-[1] flex items-center gap-1.5 px-2.5 rounded-full text-[10px] font-mono tracking-wide"
       style={{
-        bottom: -5,
-        left: '50%',
         transform: 'translateX(-50%)',
         height: 22,
         background: '#d9d4c1',
@@ -282,6 +302,7 @@ function StreamStatsOverlay({ stats, connected }: { stats: VideoStats | null; co
         border: '1px solid rgba(0,0,0,0.08)',
         opacity: OVERLAY_OPACITY,
         whiteSpace: 'nowrap',
+        ...style
       }}
     >
       <span
@@ -338,6 +359,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Pro
   const [showManual, setShowManual]     = useState(false);
   const [helpExpanded, setHelpExpanded] = useState(true);
   const [shotImage, setShotImage]       = useState<string | null>(null);
+  const { state: robotState }           = useRobotWS();
 
   useEffect(() => {
     onMounted?.();
@@ -384,7 +406,7 @@ export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Pro
             </div>
 
             <PttButton ptt={ptt} setPtt={setPtt} />
-            <StreamStatsOverlay stats={videoStats} connected={rtcConnected} />
+            <StreamStatsOverlay style={{right: -35, bottom: -5,}} stats={videoStats} connected={rtcConnected} />
 
             <button
               onClick={() => setShowManual(true)}
@@ -410,8 +432,18 @@ export function StepExecutionPage({ onComplete, onBack, onMounted, webrtc }: Pro
               >?</span>
             </button>
 
+            <DistanceStatusPill
+              distanceCm={Math.round(robotState.vitals.distance)}
+              className="absolute z-[1]"
+              style={{
+                bottom: -5,
+                left: helpExpanded ? 178 : 78,
+                transition: 'left 0.4s ease',
+              }}
+            />
+
             <RightRail color={step.color} onBack={goBack} onForward={goForward} showForward={step.label !== 'DATA' && step.label !== 'QA' && step.label !== 'SHOT'} />
-            {step.label === 'DATA' && <DataOverlay onConfirm={goForward} onSkip={goForward} />}
+            {step.label === 'DATA' && <DataOverlay onConfirm={goForward} onSkip={goForward} robotState={robotState} />}
             {step.label === 'QA' && <QAOverlay ptt={ptt} onSkip={goForward} />}
             {step.label === 'SHOT' && <ShotOverlay onConfirm={onComplete} videoElRef={videoElRef} capturedImage={shotImage} setCapturedImage={setShotImage} />}
           </div>

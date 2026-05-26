@@ -13,4 +13,6 @@ dependencies = [
     "torchvision>=0.26.0",
     "ultralytics>=8.4.46",
     "uvicorn[standard]>=0.46.0",
+    "httpx>=0.28.0",
+    "python-dotenv>=1.0.0",
 ]

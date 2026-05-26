@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DEFAULT_STATE, LogEntry, RobotState, WsOutMessage } from '../types';
+import { DEFAULT_STATE, LogEntry, RobotState } from '../types';
 
 const WS_URL = `ws://${window.location.host}/ws`;
 
@@ -36,6 +36,7 @@ export function useRobotWS() {
           const t = (msg.temperature ?? {}) as Record<string, number | null>;
           const v = (msg.vitals ?? {}) as Record<string, number | null>;
           setState((prev) => ({
+            online: (msg.online as boolean) ?? false,
             temperature: {
               ambient: t.ambient ?? prev.temperature.ambient,
               object:  t.object  ?? prev.temperature.object,
@@ -45,7 +46,6 @@ export function useRobotWS() {
               br:       v.br       ?? prev.vitals.br,
               distance: v.distance ?? prev.vitals.distance,
             },
-            playing: (msg.playing as string | null) ?? null,
           }));
         } else if (msg.type === 'log') {
           setLog((prev) => [msg.entry as LogEntry, ...prev].slice(0, 50));
@@ -66,11 +66,5 @@ export function useRobotWS() {
     };
   }, [connect]);
 
-  const send = useCallback((msg: WsOutMessage) => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify(msg));
-    }
-  }, []);
-
-  return { state, log, send, connected };
+  return { state, log, connected };
 }

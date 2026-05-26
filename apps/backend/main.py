@@ -1,68 +1,59 @@
 """
 Kairos — Backend
 - POST /webrtc/offer : WebRTC signaling (SDP offer/answer)
-- WS  /ws            : Real-time sensor state + command bus
+- WS  /ws            : Real-time sensor state broadcast
 """
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
+import os
 import threading
+
+from dotenv import load_dotenv
+load_dotenv()
 from typing import Optional
+
+import httpx
 
 logger = logging.getLogger("uvicorn.error")
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-
 from pydantic import BaseModel
 
 from video import CameraCapture
 from inference import start_inference_worker
 from webrtc_video import handle_offer, shutdown_all_peers
 
-try:
-    import rclpy
-    from rclpy.node import Node
-    from rclpy.qos import QoSPresetProfiles
-    from std_msgs.msg import Bool
-    from robot_interfaces.msg import RadarVitals, AudioCommand, Temperature
-    _ROS2_IMPORTS_OK = True
-except ImportError:
-    _ROS2_IMPORTS_OK = False
+ESP32_IP_ADDR = os.environ["ESP32_IP_ADDR"]
 
-# Set to True only after ROS2 node successfully initializes and subscribes
-ROS2_AVAILABLE = False
 
 class SensorState:
     def __init__(self) -> None:
         self._lock = threading.Lock()
 
-        # radar
         self.hr: Optional[float] = None
         self.br: Optional[float] = None
         self.distance: Optional[float] = None
 
-        # thermometer
         self.temp_ambient: Optional[float] = None
         self.temp_object: Optional[float] = None
 
-        # df mini
-        self.playing: Optional[str] = None
+        self.online: bool = False
 
     def as_state_msg(self) -> str:
-        # Round data or return None
         def r(v: Optional[float], n: int) -> Optional[float]:
             return round(v, n) if v is not None else None
 
         with self._lock:
             return json.dumps({
                 "type": "state",
-                "online": ROS2_AVAILABLE,
+                "online": self.online,
                 "temperature": {
                     "ambient": r(self.temp_ambient, 1),
-                    "object": r(self.temp_object, 1),
+                    "object":  r(self.temp_object,  1),
                 },
                 "vitals": {
                     "hr":       r(self.hr,       1),
@@ -70,69 +61,6 @@ class SensorState:
                     "distance": r(self.distance, 2),
                 },
             })
-
-
-# ---------------------------------------------------------------------------
-# ROS 2 Bridge (background thread)
-# ---------------------------------------------------------------------------
-
-_bridge = None
-
-
-if _ROS2_IMPORTS_OK:
-    class RobotBridge(Node):
-        def __init__(self, sensor: SensorState) -> None:
-            super().__init__('console_bridge')
-            self._s = sensor
-            QOS = QoSPresetProfiles.SENSOR_DATA.value
-
-            self.create_subscription(Temperature, '/robot/sensors/temperature', self._on_temp,   QOS)
-            self.create_subscription(RadarVitals, '/robot/radar/vitals',        self._on_vitals, QOS)
-
-            self._audio_pub = self.create_publisher(AudioCommand, '/robot/audio/command', 10)
-            self._ptt_pub   = self.create_publisher(Bool,         '/robot/ptt/state',     10)
-
-        def _on_temp(self, msg: Temperature):
-            with self._s._lock:
-                self._s.temp_ambient = msg.temp_ambient
-                self._s.temp_object = msg.temp_object
-
-        def _on_vitals(self, msg: RadarVitals):
-            with self._s._lock:
-                self._s.hr       = msg.heart_rate
-                self._s.br       = msg.breath_rate
-                self._s.distance = msg.target_distance
-
-        def publish_audio_command(self, action: str, track_id: str = '') -> None:
-            msg = AudioCommand()
-            msg.action   = action
-            msg.track_id = track_id
-            self._audio_pub.publish(msg)
-
-        def publish_ptt(self, active: bool) -> None:
-            msg = Bool()
-            msg.data = active
-            self._ptt_pub.publish(msg)
-
-
-def _ros_spin_thread(sensor_state: SensorState) -> None:
-    global _bridge, ROS2_AVAILABLE
-    if not _ROS2_IMPORTS_OK:
-        logger.warning("ROS2 not available — running without robot bridge")
-        return
-    try:
-        rclpy.init()
-        _bridge = RobotBridge(sensor_state)
-        ROS2_AVAILABLE = True
-        rclpy.spin(_bridge)
-    except Exception as e:
-        logger.error("ROS2 bridge failed: %s", e)
-    finally:
-        ROS2_AVAILABLE = False
-        if _bridge is not None:
-            _bridge.destroy_node()
-            _bridge = None
-        rclpy.shutdown()
 
 
 # ---------------------------------------------------------------------------
@@ -177,10 +105,25 @@ sensor = SensorState()
 manager = ConnectionManager()
 
 
-async def broadcast_loop() -> None:
-    while True:
-        await manager.broadcast(sensor.as_state_msg())
-        await asyncio.sleep(0.5)
+async def poll_and_broadcast() -> None:
+    async with httpx.AsyncClient() as client:
+        while True:
+            try:
+                resp = await client.get(f"http://{ESP32_IP_ADDR}/data", timeout=1.0)
+                data = resp.json()
+                with sensor._lock:
+                    sensor.temp_ambient = None
+                    sensor.temp_object  = float(data["TempSensorVal"])
+                    sensor.hr           = float(data["HeartRateVal"])
+                    sensor.br           = float(data["BreathRateVal"])
+                    sensor.distance     = float(data["DistanceVal"])
+                    sensor.online       = True
+            except Exception as e:
+                logger.debug("Sensor poll failed: %s", e)
+                with sensor._lock:
+                    sensor.online = False
+            await manager.broadcast(sensor.as_state_msg())
+            await asyncio.sleep(0.5)
 
 
 def _log_msg(lvl: str, text: str) -> str:
@@ -204,9 +147,7 @@ async def on_startup() -> None:
     camera.start()
     worker = start_inference_worker(camera)
     camera.commands_provider = worker.get_commands
-    t = threading.Thread(target=_ros_spin_thread, args=(sensor,), daemon=True)
-    t.start()
-    asyncio.create_task(broadcast_loop())
+    asyncio.create_task(poll_and_broadcast())
 
 
 @app.on_event("shutdown")
@@ -225,7 +166,6 @@ async def webrtc_offer(offer: WebRTCOffer):
     return await handle_offer(offer.sdp, offer.type, camera)
 
 
-
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket) -> None:
     await manager.connect(websocket)
@@ -233,38 +173,7 @@ async def websocket_endpoint(websocket: WebSocket) -> None:
     await websocket.send_text(_log_msg("INFO", "Kairos online"))
     try:
         while True:
-            raw = await websocket.receive_text()
-            try:
-                msg = json.loads(raw)
-            except json.JSONDecodeError:
-                continue
-
-            mtype = msg.get("type")
-            if mtype == "ptt_start":
-                if _bridge:
-                    _bridge.publish_ptt(True)
-                await websocket.send_text(_log_msg("INFO", "PTT ACTIVE — uplink open"))
-            elif mtype == "ptt_stop":
-                if _bridge:
-                    _bridge.publish_ptt(False)
-                await websocket.send_text(_log_msg("INFO", "PTT released — uplink closed"))
-            elif mtype == "play_sound":
-                sid = msg.get("id", "")
-                with sensor._lock:
-                    sensor.playing = sid
-                if _bridge:
-                    _bridge.publish_audio_command("play", sid)
-                await websocket.send_text(
-                    _log_msg("INFO", f"Audio payload {sid} dispatched to DF player")
-                )
-                await manager.broadcast(sensor.as_state_msg())
-            elif mtype == "stop_sound":
-                with sensor._lock:
-                    sensor.playing = None
-                if _bridge:
-                    _bridge.publish_audio_command("stop")
-                await websocket.send_text(_log_msg("INFO", "DF player Audio playback stopped"))
-                await manager.broadcast(sensor.as_state_msg())
+            await websocket.receive_text()
     except WebSocketDisconnect:
         pass
     finally:

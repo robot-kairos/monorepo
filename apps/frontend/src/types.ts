@@ -13,9 +13,9 @@ export interface Vitals {
 }
 
 export interface RobotState {
+  online: boolean;
   temperature: Temperature;
   vitals: Vitals;
-  playing: string | null;
 }
 
 export type LogLevel = 'INFO' | 'WARN' | 'ERR';
@@ -27,9 +27,9 @@ export interface LogEntry {
 }
 
 export const DEFAULT_STATE: RobotState = {
+  online: false,
   temperature: { ambient: 23.6, object: 36.0 },
   vitals: { hr: 78, br: 16, distance: 3.42 },
-  playing: null,
 };
 
 export interface VideoStats {
@@ -39,12 +39,6 @@ export interface VideoStats {
   total_kb: number;
   latency_ms: number | null;
 }
-
-export type WsOutMessage =
-  | { type: 'ptt_start' }
-  | { type: 'ptt_stop' }
-  | { type: 'play_sound'; id: string }
-  | { type: 'stop_sound' };
 
 /** CSS variable references — use in DOM/inline styles */
 export const ACCENTS: Record<Accent, string> = {
